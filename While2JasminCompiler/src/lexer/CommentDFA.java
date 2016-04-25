@@ -36,6 +36,7 @@ public class CommentDFA extends AbstractDFA {
 		transitions.put(new Pair<State, Character>(inOnelineCR, '\n'), endOfOneline);
 		transitions.put(new Pair<State, Character>(inMultiline, '*'), inMultilineStar);
 		transitions.put(new Pair<State, Character>(inMultilineStar, '/'), endOfMultiline);
+		transitions.put(new Pair<State, Character>(inMultilineStar, '*'), inMultilineStar);
 
 		// Override some default transitions
 		// TODO: a more efficient implementation
@@ -43,7 +44,7 @@ public class CommentDFA extends AbstractDFA {
 			char c = (char) i;
 			if (c != '*')
 				transitions.put(new Pair<State, Character>(inMultiline, c), inMultiline);
-			if (c != '/')
+			if (c != '/' && c != '*')
 				transitions.put(new Pair<State, Character>(inMultilineStar, c), inMultiline);
 			if (c != '\n' && c != '\r')
 				transitions.put(new Pair<State, Character>(inOneline, c), inOneline);
