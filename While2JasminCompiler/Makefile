@@ -1,20 +1,11 @@
 JFLAGS = -g
 JC = javac
-.SUFFIXES: .java .class
-.java.class:
-        $(JC) $(JFLAGS) $*.java
+BUILDPATH = bin
 
-CLASSES = \
-        helper/Pair.java \
-        lexer/AbstractDFA.java \
-        lexer/CommentDFA.java \
-        lexer/DFA.java \
-        lexer/LexerGenerator.java \
-        src/Main.java 
+default: main
 
-default: classes
-
-classes: $(CLASSES:.java=.class)
+main:
+	$(JC) $(JFLAGS) -d $(BUILDPATH) -sourcepath src src/Main.java
 
 clean:
-        $(RM) *.class
+	$(RM) -r $(BUILDPATH)/*
