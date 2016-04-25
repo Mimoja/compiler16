@@ -1,5 +1,9 @@
 package lexer;
 
+import helper.Pair;
+import java.lang.Character;
+import java.util.HashMap;
+import java.util.HashSet;
 import lexer.LexerGenerator.Token;
 
 /**
@@ -9,17 +13,24 @@ public abstract class AbstractDFA {
 
 	protected Token token; // Token that is recognized by this automaton
 
-	// TODO: use data structure for representing
-	// - states
-	// - final states (and sink states)
-	// - transitions of the form (state, input) -> state
-	// - current state
+	// TODO: typedef Pair<State, Character> Transition>;
+	protected final HashMap<Pair<State, Character>, State> transitions;
+	protected final HashSet<State> finalStates;
+	protected State initialState;
+	protected State sinkState;
+
+	protected State currentState;
+
+	AbstractDFA() {
+		transitions = new HashMap<Pair<State, Character>, State>();
+		finalStates = new HashSet<State>();
+	}
 
 	/**
 	 * Reset the automaton to the initial state.
 	 */
 	public void reset() {
-		// TODO: reset automaton to initial state
+		currentState = initialState;
 	}
 
 	/**
@@ -32,8 +43,12 @@ public abstract class AbstractDFA {
 	 *            The current input.
 	 */
 	public void doStep(char letter) {
-		// TODO: do step by going to the next state according to the current
-		// state and the read letter.
+		Pair p = new Pair<State, Character>(currentState, letter);
+		State s = transitions.get(p);
+
+		currentState = (s != null)? s : sinkState;
+		assert sinkState != null;
+		assert currentState != null;
 	}
 
 	/**
@@ -42,8 +57,7 @@ public abstract class AbstractDFA {
 	 * @return True, if the automaton is currently in the accepting state.
 	 */
 	public boolean isAccepting() {
-		// TODO: return if the current state is accepting
-		return false;
+		return finalStates.contains(currentState);
 	}
 
 	/**
@@ -57,6 +71,7 @@ public abstract class AbstractDFA {
 		this.reset();
 		char[] inputCharWord = inputWord.toCharArray();
 		for (char letter : inputCharWord) {
+			State old = currentState;
 			doStep(letter);
 		}
 		return isAccepting();
@@ -69,8 +84,21 @@ public abstract class AbstractDFA {
 	 *         reached.
 	 */
 	public boolean isProductive() {
-		// TODO: return if the current state is productive
-		return false;
+		if (isAccepting())
+			return true;
+
+		if (currentState.equals(sinkState))
+			return false;
+
+		/*
+		 * I would like to return "maybe" here, but that's not a
+		 * boolean.
+		 *
+		 * "true", however, is correct, if the automaton is minimal in
+		 * a certain way: If there are no states but the sink state,
+		 * which make the final states unreachable.
+		 */
+		return true;
 	}
 
 	/**
@@ -78,5 +106,18 @@ public abstract class AbstractDFA {
 	 */
 	public Token getToken() {
 		return token;
+	}
+
+
+	/* Internal classes. Maybe we should move them to individual files. */
+
+	/** This class represents a state */
+	class State {
+		final String string;
+
+		public State(String s)   { string = s; }
+		public String toString() { return string; }
+
+		/* Do we need to implement hashCode and equals here? */
 	}
 }

@@ -19,10 +19,12 @@ public class DFA extends AbstractDFA {
 	 *            The token corresponding to the recognized word.
 	 */
 	public DFA(String word, Token token) {
-		assert (word.length() > 0);
-
+		assert (word.length() > 0); // <--- whyyyyyy?
 		this.token = token;
 
-		// TODO: build DFA recognizing the given word
+		initialState = new State("init");
+		sinkState = new State("sink");
+
+		// TODO: moar
 	}
 }
