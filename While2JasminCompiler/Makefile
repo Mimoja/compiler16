@@ -2,11 +2,14 @@ JFLAGS = -g
 JC = javac
 BUILDPATH = bin
 
-default: main
+default: bin main
 
 main:
 	$(JC) $(JFLAGS) -d $(BUILDPATH) -sourcepath src src/Main.java
 
+bin:
+	mkdir $(BUILDPATH)
+
 clean:
-	$(RM) -r $(BUILDPATH)/*
+	$(RM) -r $(BUILDPATH)
 
