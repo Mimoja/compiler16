@@ -16,12 +16,11 @@
   \node[state]          (q4) [right       of=q1] {$q_4$};
   \node[state]          (q5) [right       of=q4] {$q_5$};
   \node[state]          (q6) [below right of=q0] {$q_6$};
-  \node[state]          (q7) [above right of=q6] {$q_7$};
+  \node[state]          (q7) [below left  of=q6] {$q_7$};
   \node[state]          (q8) [below right of=q7] {$q_8$};
-  \node[state]          (q9) [below right of=q6] {$q_9$};
-  \node[state]          (q10)[above right of=q9] {$q_{10}$};
+  \node[state]          (q10)[      right of=q6] {$q_{10}$};
   \node[state]          (q11)[above right of=q10]{$q_{11}$};
-  \node[state]          (q12)[below right of=q8] {$q_{12}$};
+  \node[state]          (q12)[below right of=q10] {$q_{12}$};
   \node[state]          (q13)[below left  of=q12]{$q_{13}$};
   \node[state]          (q14)[right       of=q13]{$q_{14}$};
   \node[state]          (q15)[right       of=q12]{$q_{15}$};
@@ -41,12 +40,11 @@
              edge [bend left]  node {$\Sigma \symbol{92} \{*,/\}$} (q4)
 
         (q6) edge              node {$\epsilon$} (q7)
-             edge              node {$\epsilon$} (q9)
+             edge              node {.} (q10)
         (q7) edge [bend left]  node {0..9}       (q8)
         (q8) edge [bend left]  node {$\epsilon$} (q7)
-             edge              node {$\epsilon$} (q9)
+             edge              node {.} (q10)
              edge              node {$\epsilon$} (q12)
-        (q9) edge              node {.}          (q10)
         (q10)edge [bend left]  node {0..9}       (q11)
         (q11)edge [bend left]  node {$\epsilon$} (q10)
              edge              node {$\epsilon$} (q12)
