@@ -3,21 +3,22 @@ JAVA = java
 JFLAGS = -g -Xlint:unchecked
 BUILDPATH = bin
 
-all: main
+all: $(BUILDPATH)/Main.class
 
-main: bin
+SRCS=$(wildcard src/*.java) $(wildcard src/*/*.java)
+
+$(BUILDPATH)/Main.class: $(SRCS)
+	mkdir -p $(BUILDPATH)
 	$(JC) $(JFLAGS) -d $(BUILDPATH) -sourcepath src src/Main.java
 
-bin:
-	mkdir $(BUILDPATH)
 
-
-run-tests: main
+run-tests: $(BUILDPATH)/Main.class
 	for t in tests/*.txt; do \
 		echo; echo $$t; \
 		$(JAVA) -ea -cp $(BUILDPATH) Main $$t; \
 	done
 
 clean:
-	$(RM) -r $(BUILDPATH)
+	rm -rf $(BUILDPATH)
 
+.PHONY: all clean
