@@ -1,6 +1,6 @@
-JFLAGS = -g
 JC = javac
 JAVA = java
+JFLAGS = -g -Xlint:unchecked
 BUILDPATH = bin
 
 default: main
