@@ -3,7 +3,7 @@ JAVA = java
 JFLAGS = -g -Xlint:unchecked
 BUILDPATH = bin
 
-default: main
+all: main
 
 main: bin
 	$(JC) $(JFLAGS) -d $(BUILDPATH) -sourcepath src src/Main.java
