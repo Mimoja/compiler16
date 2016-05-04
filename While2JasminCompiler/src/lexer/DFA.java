@@ -1,7 +1,10 @@
 package lexer;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
+import util.Pair;
 import lexer.LexerGenerator.Token;
-import helper.Pair;
 
 /**
  * DFA recognizing a given word.
@@ -20,21 +23,18 @@ public class DFA extends AbstractDFA {
 	 *            The token corresponding to the recognized word.
 	 */
 	public DFA(String word, Token token) {
-		int n = word.length();
-		assert (n > 0); // <--- whyyyyyy?
+		assert (word.length() > 0);
+
 		this.token = token;
 
-		initialState = new State("init");
-		sinkState = new State("sink");
-
-		State[] states = new State[n+1];
-		states[0] = initialState;
-
-		for(int i = 0; i < n; i++) {
-			states[i+1] = new State("letter " + i);
-			Pair p = new Pair<State, Character>(states[i], word.charAt(i));
-			transitions.put(p, states[i+1]);
+		finalStates.add(word.length());
+		sinkState = word.length() + 1;
+		transitions = new HashMap<Pair<Integer, Character>, Integer>();
+		for (int i = 0; i < word.length(); i++) {
+			transitions.put(new Pair<Integer, Character>(i, word.charAt(i)), i + 1);
 		}
-		finalStates.add(states[n]);
+
+		productive = new int[word.length() + 2];
+		Arrays.fill(productive, -1);
 	}
 }

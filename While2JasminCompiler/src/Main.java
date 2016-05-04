@@ -1,8 +1,10 @@
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
-import lexer.*;
-import lexer.LexerGenerator.Token;
+import lexer.LexerException;
+import lexer.LexerGenerator;
+import lexer.Symbol;
 
 /**
  * Main class for running the compiler.
@@ -34,16 +36,19 @@ public class Main {
 				System.exit(0);
 			}
 		}
+		
+		// Append symbol for EOF
+		inputProgram += "$";
 
 		// Lexical Analysis
-		System.out.println("Input: " + inputProgram);
-		// Try to recognize with automaton for "while"
-		AbstractDFA whileDFA = new DFA("while", Token.WHILE);
-		System.out.println("WHILE: " + whileDFA.run(inputProgram));
-
-		// Try to recognize with automaton for comments
-		AbstractDFA commentDFA = new CommentDFA();
-		System.out.println("COMMENT: " + commentDFA.run(inputProgram));
+		List<Symbol> symbols = null;
+		try {
+			symbols = LexerGenerator.analyse(inputProgram);
+			System.out.println("Symbol stream: " + symbols);
+		} catch (LexerException e) {
+			System.out.println(e.getMessage());
+			System.out.println(e.getAnalysisBeforeFailure());
+		}
 
 		// Syntactical Analysis
 

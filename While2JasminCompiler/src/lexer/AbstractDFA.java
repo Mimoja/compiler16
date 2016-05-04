@@ -1,9 +1,9 @@
 package lexer;
 
-import helper.Pair;
-import java.lang.Character;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+
+import util.Pair;
 import lexer.LexerGenerator.Token;
 
 /**
@@ -13,24 +13,33 @@ public abstract class AbstractDFA {
 
 	protected Token token; // Token that is recognized by this automaton
 
-	// TODO: typedef Pair<State, Character> Transition>;
-	protected final HashMap<Pair<State, Character>, State> transitions;
-	protected final HashSet<State> finalStates;
-	protected State initialState;
-	protected State sinkState;
+	protected final int initialState = 0;
+	protected int sinkState;
+	// set of final states
+	protected ArrayList<Integer> finalStates = new ArrayList<Integer>();
+	// mapping from (state, character) to nextState
+	protected HashMap<Pair<Integer, Character>, Integer> transitions;
 
-	protected State currentState;
+	protected int currentState = 0;
 
-	AbstractDFA() {
-		transitions = new HashMap<Pair<State, Character>, State>();
-		finalStates = new HashSet<State>();
-	}
+	protected int[] productive;
 
 	/**
 	 * Reset the automaton to the initial state.
 	 */
 	public void reset() {
 		currentState = initialState;
+	}
+
+	/**
+	 * This is useful for resuming parsing at a certain position
+	 * 
+	 * @param state
+	 *            Id of state that the automaton should start in
+	 */
+	public void resetToState(int state) {
+		assert (0 <= state && state < productive.length);
+		currentState = state;
 	}
 
 	/**
@@ -43,18 +52,17 @@ public abstract class AbstractDFA {
 	 *            The current input.
 	 */
 	public void doStep(char letter) {
-		Pair p = new Pair<State, Character>(currentState, letter);
-		State s = transitions.get(p);
-
-		currentState = (s != null)? s : sinkState;
-		assert sinkState != null;
-		assert currentState != null;
+		Integer nextState = transitions.get(new Pair<Integer, Character>(currentState, letter));
+		if (nextState == null)
+			currentState = sinkState;
+		else
+			currentState = nextState;
 	}
 
 	/**
 	 * Check if the automaton is currently accepting.
 	 * 
-	 * @return True, if the automaton is currently in the accepting state.
+	 * @return True, if the automaton is currently in an accepting state.
 	 */
 	public boolean isAccepting() {
 		return finalStates.contains(currentState);
@@ -71,10 +79,18 @@ public abstract class AbstractDFA {
 		this.reset();
 		char[] inputCharWord = inputWord.toCharArray();
 		for (char letter : inputCharWord) {
-			State old = currentState;
 			doStep(letter);
 		}
 		return isAccepting();
+	}
+
+	/**
+	 * Get the current state.
+	 * 
+	 * @return The id of the current state.
+	 */
+	public int getCurrentState() {
+		return currentState;
 	}
 
 	/**
@@ -84,21 +100,45 @@ public abstract class AbstractDFA {
 	 *         reached.
 	 */
 	public boolean isProductive() {
-		if (isAccepting())
-			return true;
+		return isFinalStateReachable(currentState);
+	}
 
-		if (currentState.equals(sinkState))
+	/**
+	 * Perform BFS to check if a final state is reachable from the given state.
+	 * 
+	 * @param state
+	 *            Starting state for BFS.
+	 * @return True, if the state is productive, i.e. a final state can be
+	 *         reached.
+	 */
+	protected boolean isFinalStateReachable(int state) {
+		if (productive[state] == 0) {
 			return false;
+		} else if (productive[state] == 1) {
+			return true;
+		} else if (finalStates.contains(state)) {
+			productive[state] = 1;
+			return true;
+		} else {
+			assert (productive[state] == -1);
+			productive[state] = 0;
+		}
 
-		/*
-		 * I would like to return "maybe" here, but that's not a
-		 * boolean.
-		 *
-		 * "true", however, is correct, if the automaton is minimal in
-		 * a certain way: If there are no states but the sink state,
-		 * which make the final states unreachable.
-		 */
-		return true;
+		// Perform BFS
+		for (HashMap.Entry<Pair<Integer, Character>, Integer> entry : transitions.entrySet()) {
+			Pair<Integer, Character> key = entry.getKey();
+			// Consider outgoing transitions of state
+			if (key.getFirst() == state) {
+				if (isFinalStateReachable(entry.getValue())) {
+					assert (state != sinkState);
+					productive[state] = 1;
+					return true;
+				}
+			}
+		}
+
+		productive[state] = 0;
+		return false;
 	}
 
 	/**
@@ -106,18 +146,5 @@ public abstract class AbstractDFA {
 	 */
 	public Token getToken() {
 		return token;
-	}
-
-
-	/* Internal classes. Maybe we should move them to individual files. */
-
-	/** This class represents a state */
-	class State {
-		final String string;
-
-		public State(String s)   { string = s; }
-		public String toString() { return string; }
-
-		/* Do we need to implement hashCode and equals here? */
 	}
 }
