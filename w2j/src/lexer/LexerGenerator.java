@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class LexerGenerator {
 
-	// The automata's alphabet is every character that Java can represent
+	// The automaton's alphabet is every character that Java can represent
 	// However the relevant letters are the following
 
 	// Individual letters
