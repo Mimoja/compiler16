@@ -2,7 +2,7 @@
 #
 # http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.2572
 
-SUBMODULES=While2JasminCompiler s01
+SUBMODULES=w2j s01
 
 all:
 	for i in $(SUBMODULES); do \
@@ -10,4 +10,4 @@ all:
 	done
 
 run-tests:
-	cd While2JasminCompiler && $(MAKE) run-tests
+	cd w2j && $(MAKE) run-tests
