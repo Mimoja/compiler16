@@ -204,7 +204,7 @@ public class BacktrackingDFA {
 	/**
 	 * Check if the current state is productive.
 	 * 
-	 * @return True iff the current state of every component is productive.
+	 * @return True iff the current state of at least one component is productive.
 	 */
 	private boolean isProductive() {
 		for (AbstractDFA automaton : automata) {

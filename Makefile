@@ -9,5 +9,12 @@ all:
 		(cd $$i; $(MAKE) all) \
 	done
 
+clean:
+	for i in $(SUBMODULES); do \
+		(cd $$i; $(MAKE) clean) \
+	done
+
 run-tests:
 	cd w2j && $(MAKE) run-tests
+
+.PHONY: all clean run-tests
