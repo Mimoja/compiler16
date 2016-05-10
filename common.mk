@@ -9,7 +9,7 @@ zip: $(ZIP)
 
 $(ZIP): ../w2j all
 	rm -f $(ZIP)
-	cd ../w2j && zip -q $(realpath .)/$(ZIP) -r src tests -i '*.java' -i '*.txt'
+	cd ../w2j && zip -q $(realpath .)/$(ZIP) -r . -i '*.java' -i '*.txt' -i 'Makefile'
 	zip -q $(ZIP) s$(NUMBER).pdf
 
 clean:
