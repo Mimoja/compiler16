@@ -221,13 +221,8 @@ public class BacktrackingDFA {
 					if(!isProductive()) {
 						// (3)
 						throw new LexerException("Lexer Error: no matching token");
-					} else if ( nextmode == null) {
-						// (2)
-						attribute += word.charAt(0);
-						word = word.substring(1);
-						mode = null;
 					} else {
-						// (1)
+						// (1) or (2)
 						attribute += word.charAt(0);
 						word = word.substring(1);
 						mode = nextmode;
