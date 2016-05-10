@@ -196,9 +196,73 @@ public class BacktrackingDFA {
 	public List<Symbol> run(String word) throws LexerException {
 		List<Symbol> result = new ArrayList<Symbol>();
 
-		// TODO: implement the backtracking automaton.
-		
-		return result;
+		String lookahead = "";
+		String attribute = "";
+
+		// null Token means normal mode
+		Token mode = null;
+
+		currentState = initialState;
+		int[] nextstate;
+
+		while(true){
+			if(!word.isEmpty()){
+				Token nextmode = doStep(word.charAt(0));
+			
+				if(mode == null) {
+					// Comments with numbers in parentheses reference lines from Definition 3.15
+					if(!isProductive()) {
+						// (3)
+						throw new LexerException("Lexer Error: no matching token");
+					} else if ( nextmode == null) {
+						// (2)
+						word = word.substring(1);
+						mode = null;
+					} else {
+						// (1)
+						attribute = "" + word.charAt(0);
+						word = word.substring(1);
+						mode = nextmode;
+					}
+				} else {
+					if(!isProductive()) {
+						// (6)
+						currentState = initialState;
+						word = lookahead + word;
+						lookahead = "";
+						result.add(new Symbol(mode, attribute));
+						mode = null;
+						attribute = "";
+					} else if (nextmode == null) {
+						// (5)
+						lookahead = lookahead + word.charAt(0);
+						word = word.substring(1);
+					} else {
+						// (4)
+						mode = nextmode;
+						attribute = attribute + word.charAt(0);
+						word = word.substring(1);
+						lookahead = "";
+					}
+				}
+			} else {
+				if(!lookahead.isEmpty()) {
+					// (9)
+					currentState = initialState;
+					word = lookahead;
+					lookahead = "";
+					result.add(new Symbol(mode, attribute));
+					mode = null;
+					attribute = "";
+				} else if (mode == null) {
+					// (8)
+					throw new LexerException("Lexer Error: unexpected end of input");
+				} else {
+					result.add(new Symbol(mode, attribute));
+					return result;
+				}	
+			}
+		}
 	}
 
 	/**
