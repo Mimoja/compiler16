@@ -6,15 +6,15 @@ SUBMODULES=w2j s01 s02
 
 all:
 	for i in $(SUBMODULES); do \
-		(cd $$i; $(MAKE) all) \
+		$(MAKE) -C $$i all; \
 	done
 
 clean:
 	for i in $(SUBMODULES); do \
-		(cd $$i; $(MAKE) clean) \
+		$(MAKE) -C $$i clean; \
 	done
 
 run-tests:
-	cd w2j && $(MAKE) run-tests
+	$(MAKE) -C w2j run-tests
 
 .PHONY: all clean run-tests
