@@ -202,7 +202,14 @@ public class BacktrackingDFA {
 		// null Token means normal mode
 		Token mode = null;
 
-		currentState = initialState;
+		for(int i = 0; i < automata.size(); i++) {
+			AbstractDFA A = automata.get(i);
+			A.reset();
+			initialState[i] = A.getCurrentState();
+		}
+
+		resetToState(initialState);
+
 		int[] nextstate;
 
 		while(true){
@@ -216,18 +223,19 @@ public class BacktrackingDFA {
 						throw new LexerException("Lexer Error: no matching token");
 					} else if ( nextmode == null) {
 						// (2)
+						attribute += word.charAt(0);
 						word = word.substring(1);
 						mode = null;
 					} else {
 						// (1)
-						attribute = "" + word.charAt(0);
+						attribute += word.charAt(0);
 						word = word.substring(1);
 						mode = nextmode;
 					}
 				} else {
 					if(!isProductive()) {
 						// (6)
-						currentState = initialState;
+						resetToState(initialState);
 						word = lookahead + word;
 						lookahead = "";
 						result.add(new Symbol(mode, attribute));
@@ -240,7 +248,7 @@ public class BacktrackingDFA {
 					} else {
 						// (4)
 						mode = nextmode;
-						attribute = attribute + word.charAt(0);
+						attribute = attribute + lookahead + word.charAt(0);
 						word = word.substring(1);
 						lookahead = "";
 					}
@@ -248,7 +256,7 @@ public class BacktrackingDFA {
 			} else {
 				if(!lookahead.isEmpty()) {
 					// (9)
-					currentState = initialState;
+					resetToState(initialState);
 					word = lookahead;
 					lookahead = "";
 					result.add(new Symbol(mode, attribute));
@@ -258,6 +266,7 @@ public class BacktrackingDFA {
 					// (8)
 					throw new LexerException("Lexer Error: unexpected end of input");
 				} else {
+					// (7)
 					result.add(new Symbol(mode, attribute));
 					return result;
 				}	
