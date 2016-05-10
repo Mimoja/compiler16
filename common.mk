@@ -10,6 +10,7 @@ zip: $(ZIP)
 $(ZIP): ../w2j all
 	rm -f $(ZIP)
 	cd ../w2j && zip -q $(realpath .)/$(ZIP) -r src tests -i '*.java' -i '*.txt'
+	zip -q $(ZIP) s$(NUMBER).pdf
 
 clean:
 	rm -f s$(NUMBER).pdf $(EXTRA_GENERATED) $(ZIP)
