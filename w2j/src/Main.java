@@ -2,9 +2,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
-import lexer.LexerException;
-import lexer.LexerGenerator;
-import lexer.Symbol;
+import lexer.*;
+import parser.*;
 
 /**
  * Main class for running the compiler.
@@ -36,7 +35,7 @@ public class Main {
 				System.exit(0);
 			}
 		}
-		
+
 		// Append symbol for EOF
 		inputProgram += "$";
 
@@ -46,11 +45,21 @@ public class Main {
 			symbols = LexerGenerator.analyse(inputProgram);
 			System.out.println("Symbol stream: " + symbols);
 		} catch (LexerException e) {
+			System.out.println("LexErr");
 			System.out.println(e.getMessage());
 			System.out.println(e.getAnalysisBeforeFailure());
 		}
 
 		// Syntactical Analysis
+		RecursiveDescentParser parser = new RecursiveDescentParserAssignment();
+		try {
+			List<Integer> rules = parser.analyse(symbols);
+			System.out.println("Rule stream: " + rules);
+		} catch (ParserException e) {
+			System.out.println("ParseErr");
+			System.out.println(e.getMessage());
+			System.out.println(e.getAnalysisBeforeFailure());
+		}
 
 		// Semantical Analysis
 

@@ -16,7 +16,7 @@ import util.Pair;
 public class BacktrackingDFA {
 
 	private List<AbstractDFA> automata;
-	private HashMap<Pair<int[], Character>, int[]> transitions;
+	private HashMap<Pair<String, Character>, int[]> transitions;
 	private Map<String, Token> recognisedToken;
 	private int[] initialState;
 	private int[] backtrackState;
@@ -88,7 +88,7 @@ public class BacktrackingDFA {
 	 * Generate all transitions by exploring the state space.
 	 */
 	private void generateTransitions() {
-		transitions = new HashMap<Pair<int[], Character>, int[]>();
+		transitions = new HashMap<Pair<String, Character>, int[]>();
 		recognisedToken = new HashMap<String, Token>();
 
 		// Create array of relevant alphabet
@@ -110,11 +110,11 @@ public class BacktrackingDFA {
 		visitedStates.add(hashState(state));
 
 		// Explore possible states
-		int[] tempState = new int[initialState.length];
 		while (!statesToExpand.isEmpty()) {
 			state = statesToExpand.remove();
 			// Consider all possible transitions
 			for (char letter : relevantAlphabet) {
+				int[] tempState = new int[initialState.length];
 				for (int i = 0; i < automata.size(); i++) {
 					AbstractDFA automaton = automata.get(i);
 					automaton.resetToState(state[i]);
@@ -123,10 +123,10 @@ public class BacktrackingDFA {
 				}
 				if (!visitedStates.contains(hashState(tempState))) {
 					// New state needs exploration
-					statesToExpand.add(tempState.clone());
+					statesToExpand.add(tempState);
 					visitedStates.add(hashState(tempState));
 				}
-				transitions.put(new Pair<int[], Character>(state, letter), tempState);
+				transitions.put(new Pair<String, Character>(hashState(state), letter), tempState);
 			}
 			// Check final states
 			setToken(state);
@@ -142,9 +142,11 @@ public class BacktrackingDFA {
 	 */
 	private String hashState(int[] state) {
 		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < state.length; i++) {
+		for (int i = 0; i < state.length - 1; i++) {
 			builder.append(state[i]);
+			builder.append(',');
 		}
+		builder.append(state[state.length - 1]);
 		return builder.toString();
 	}
 
@@ -172,12 +174,19 @@ public class BacktrackingDFA {
 	 * @param letter
 	 *            The current character.
 	 * @return The recognized token.
+	 * @throws LexerException
+	 *             Exeception if step could not be performed.
 	 */
-	public Token doStep(char letter) {
-		for (int i = 0; i < automata.size(); i++) {
-			automata.get(i).doStep(letter);
-			currentState[i] = automata.get(i).getCurrentState();
+	public Token doStep(char letter) throws LexerException {
+		currentState = transitions.get(new Pair<String, Character>(hashState(currentState), letter));
+		if (currentState == null) {
+			throw new LexerException("Symbol: " + letter + " not part of the alphabet.");
 		}
+		// for (int i = 0; i < automata.size(); i++) {
+		// automata.get(i).doStep(letter);
+		// currentState[i] = automata.get(i).getCurrentState();
+		// }
+
 		return recognisedToken.get(hashState(currentState));
 	}
 
@@ -196,83 +205,52 @@ public class BacktrackingDFA {
 	public List<Symbol> run(String word) throws LexerException {
 		List<Symbol> result = new ArrayList<Symbol>();
 
-		String lookahead = "";
-		String attribute = "";
+		char[] wordAsChar = word.toCharArray();
+		Token backtrackToken = null;
+		Token currentToken = null;
+		int backtrackPointer = 0;
+		int currentPointer = 0;
+		System.arraycopy(initialState, 0, backtrackState, 0, initialState.length);
+		System.arraycopy(initialState, 0, currentState, 0, initialState.length);
 
-		// null Token means normal mode
-		Token mode = null;
-
-		for(int i = 0; i < automata.size(); i++) {
-			AbstractDFA A = automata.get(i);
-			A.reset();
-			initialState[i] = A.getCurrentState();
+		// Initialize automata
+		for (int i = 0; i < automata.size(); i++) {
+			automata.get(i).reset();
 		}
 
-		resetToState(initialState);
-
-		int[] nextstate;
-
-		while(true){
-			if(!word.isEmpty()){
-				Token nextmode = doStep(word.charAt(0));
-			
-				if(mode == null) {
-					// Comments with numbers in parentheses reference lines from Definition 3.15
-					if(!isProductive()) {
-						// (3)
-						throw new LexerException("Lexer Error: no matching token");
-					} else {
-						// (1) or (2)
-						attribute += word.charAt(0);
-						word = word.substring(1);
-						mode = nextmode;
-					}
-				} else {
-					if(!isProductive()) {
-						// (6)
-						resetToState(initialState);
-						word = lookahead + word;
-						lookahead = "";
-						result.add(new Symbol(mode, attribute));
-						mode = null;
-						attribute = "";
-					} else if (nextmode == null) {
-						// (5)
-						lookahead = lookahead + word.charAt(0);
-						word = word.substring(1);
-					} else {
-						// (4)
-						mode = nextmode;
-						attribute = attribute + lookahead + word.charAt(0);
-						word = word.substring(1);
-						lookahead = "";
-					}
+		// Run backtracking DFA
+		while (backtrackPointer < wordAsChar.length) {
+			String value = Character.toString(wordAsChar[currentPointer]);
+			while (currentPointer < wordAsChar.length && isProductive()) {
+				currentToken = doStep(wordAsChar[currentPointer]);
+				if (currentToken != null) {
+					// New token found
+					value += new String(Arrays.copyOfRange(wordAsChar, backtrackPointer + 1, currentPointer + 1));
+					backtrackToken = currentToken;
+					backtrackPointer = currentPointer;
+					System.arraycopy(currentState, 0, backtrackState, 0, initialState.length);
 				}
+				currentPointer++;
+			}
+			if (backtrackToken != null) {
+				result.add(new Symbol(backtrackToken, value));
+				currentPointer = backtrackPointer + 1;
+				resetToState(initialState);
+				backtrackToken = null;
+				backtrackPointer++;
 			} else {
-				if(!lookahead.isEmpty()) {
-					// (9)
-					resetToState(initialState);
-					word = lookahead;
-					lookahead = "";
-					result.add(new Symbol(mode, attribute));
-					mode = null;
-					attribute = "";
-				} else if (mode == null) {
-					// (8)
-					throw new LexerException("Lexer Error: unexpected end of input");
-				} else {
-					// (7)
-					result.add(new Symbol(mode, attribute));
-					return result;
-				}	
+				throw new LexerException("Last backtrack position is: " + backtrackPointer
+						+ "\nScanned before failure: " + word.substring(0, backtrackPointer + 1), result);
 			}
 		}
+
+		return result;
 	}
 
 	/**
 	 * Check if the current state is productive.
 	 * 
-	 * @return True iff the current state of at least one component is productive.
+	 * @return True iff the current state of every component is productive.
 	 */
 	private boolean isProductive() {
 		for (AbstractDFA automaton : automata) {

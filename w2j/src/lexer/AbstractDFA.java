@@ -2,6 +2,7 @@ package lexer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import util.Pair;
 import lexer.LexerGenerator.Token;
@@ -125,7 +126,7 @@ public abstract class AbstractDFA {
 		}
 
 		// Perform BFS
-		for (HashMap.Entry<Pair<Integer, Character>, Integer> entry : transitions.entrySet()) {
+		for (Map.Entry<Pair<Integer, Character>, Integer> entry : transitions.entrySet()) {
 			Pair<Integer, Character> key = entry.getKey();
 			// Consider outgoing transitions of state
 			if (key.getFirst() == state) {

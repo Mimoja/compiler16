@@ -1,20 +1,20 @@
-package lexer;
+package parser;
 
 import java.util.List;
 
 /**
- * Exception thrown by the lexer.
+ * Exception thrown by the parser.
  */
-public class LexerException extends Exception {
+public class ParserException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	private List<Symbol> analysisBeforeFailure = null;
+	private List<Integer> analysisBeforeFailure = null;
 
 	/**
 	 * Constructor.
 	 */
-	public LexerException() {
+	public ParserException() {
 	}
 
 	/**
@@ -23,7 +23,7 @@ public class LexerException extends Exception {
 	 * @param s
 	 *            Text explaining the exception.
 	 */
-	public LexerException(String s) {
+	public ParserException(String s) {
 		super(s);
 	}
 
@@ -33,19 +33,19 @@ public class LexerException extends Exception {
 	 * @param s
 	 *            Text explaining the exception.
 	 * @param analysis
-	 *            Read symbols up to the exception.
+	 *            Recognized rules up to the exception.
 	 */
-	public LexerException(String s, List<Symbol> analysis) {
+	public ParserException(String s, List<Integer> analysis) {
 		this(s);
 		this.analysisBeforeFailure = analysis;
 	}
 
 	/**
-	 * Gets the read symbols up to the exception.
+	 * Gets the recognized rules up to the exception.
 	 * 
-	 * @return List of symbols read before the failure.
+	 * @return List of rules recognized before the failure.
 	 */
-	public List<Symbol> getAnalysisBeforeFailure() {
+	public List<Integer> getAnalysisBeforeFailure() {
 		return analysisBeforeFailure;
 	}
 }
