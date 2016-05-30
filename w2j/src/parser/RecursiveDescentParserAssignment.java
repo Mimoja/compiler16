@@ -9,7 +9,8 @@ import lexer.Symbol;
 /**
  * Recursive descent parser for assignment of the form: int id = num;
  *
- * Grammar: 1: start -> assignment SEMICOLON EOF
+ * Grammar: 
+ * 1: start -> assignment SEMICOLON EOF
  * 2: assignment -> ID ASSIGN expr
  * 3: expr -> ID subexpr 
  * 4: expr -> NUMBER subexpr 
