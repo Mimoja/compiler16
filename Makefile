@@ -2,7 +2,7 @@
 #
 # http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.2572
 
-SUBMODULES=w2j s01 s02 s03
+SUBMODULES=w2j s01 s02 s03 s04
 
 all:
 	for i in $(SUBMODULES); do \
