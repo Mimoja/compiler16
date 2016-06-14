@@ -1,7 +1,7 @@
 all: s$(NUMBER).pdf
 
 %.pdf: %.md $(EXTRA_GENERATED) $(EXTRA_STATIC)
-	pandoc $< -o $@
+	pandoc --variable=geometry:a4paper $< -o $@
 
 ZIP=ex$(NUMBER)_282245_331410_334424_335148.zip
 
