@@ -11,134 +11,139 @@ import symbols.NonTerminals.NonTerminal;
  */
 public class LR0Set extends HashSet<LR0Item> {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	// Symbol sequence
-	private String name;
+    // Symbol sequence
+    private String name;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param name
-	 *            Symbol sequence for LR(0) set.
-	 */
-	public LR0Set(String name) {
-		this.name = name;
-	}
+    /**
+     * Constructor.
+     *
+     * @param name Symbol sequence for LR(0) set.
+     */
+    public LR0Set(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * Get the name representing the symbol sequence.
-	 * 
-	 * @return Name
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * Get the name representing the symbol sequence.
+     *
+     * @return Name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * Check for conflicts.
-	 * 
-	 * @return True iff the set has conflicts
-	 */
-	public boolean hasConflicts() {
-		// TODO implement check for conflicts
+    /**
+     * Check for conflicts.
+     *
+     * @return True iff the set has conflicts
+     */
+    public boolean hasConflicts() {
+        int shift = 0;
+        int reduce = 0;
+        for (Iterator<LR0Item> i = iterator(); i.hasNext();) {
+            LR0Item temp = i.next();
+            shift += (temp.canShiftOverTerminal()) ?  1 : 0;
+            reduce += (temp.canReduce()) ?  1 : 0;
+        }
+        if(reduce > 1 ) return true;
+        if(reduce == 1 && shift > 0) return true;
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Get all shiftable symbols.
-	 * 
-	 * @return Set of shiftable symbols.
-	 */
-	public HashSet<Alphabet> getShiftableSymbols() {
-		HashSet<Alphabet> symbols = new HashSet<Alphabet>();
-		for (LR0Item item : this) {
-			if (item.canShift()) {
-				symbols.add(item.getShiftableSymbolName());
-			}
-		}
-		return symbols;
-	}
+    /**
+     * Get all shiftable symbols.
+     *
+     * @return Set of shiftable symbols.
+     */
+    public HashSet<Alphabet> getShiftableSymbols() {
+        HashSet<Alphabet> symbols = new HashSet<Alphabet>();
+        for (LR0Item item : this) {
+            if (item.canShift()) {
+                symbols.add(item.getShiftableSymbolName());
+            }
+        }
+        return symbols;
+    }
 
-	/**
-	 * Get new LR(0) items after shift with given symbol.
-	 * 
-	 * @param symbol
-	 *            Symbol to shift.
-	 * @return A subset (of the current LR(0) set) which contains those items
-	 *         that allow for a shift with the given symbol
-	 */
-	public LR0Set getShiftedItemsFor(Alphabet symbol) {
-		LR0Set result = new LR0Set(getName() + symbol);
-		for (LR0Item item : this) {
-			if (item.canShift() && item.getShiftableSymbolName().equals(symbol)) {
-				result.add(item.getShiftedItem());
-			}
-		}
-		return result;
-	}
+    /**
+     * Get new LR(0) items after shift with given symbol.
+     *
+     * @param symbol Symbol to shift.
+     * @return A subset (of the current LR(0) set) which contains those items
+     * that allow for a shift with the given symbol
+     */
+    public LR0Set getShiftedItemsFor(Alphabet symbol) {
+        LR0Set result = new LR0Set(getName() + symbol);
+        for (LR0Item item : this) {
+            if (item.canShift() && item.getShiftableSymbolName().equals(symbol)) {
+                result.add(item.getShiftedItem());
+            }
+        }
+        return result;
+    }
 
-	/**
-	 * Check if the set contains a complete item of the form [A -> alpha.].
-	 * 
-	 * @return True iff the set contains a complete item
-	 */
-	public boolean containsCompleteItem() {
-		for (LR0Item item : this) {
-			if (!item.canShift()) {
-				return true;
-			}
-		}
-		return false;
-	}
+    /**
+     * Check if the set contains a complete item of the form [A -> alpha.].
+     *
+     * @return True iff the set contains a complete item
+     */
+    public boolean containsCompleteItem() {
+        for (LR0Item item : this) {
+            if (!item.canShift()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	/**
-	 * Check if the set contains a final item.
-	 * 
-	 * @param start
-	 *            Start symbol of grammar
-	 * @return True iff the set contains a final item.
-	 */
-	public boolean containsFinalItem(NonTerminal start) {
-		LR0Item item = getCompleteItem();
-		if (item != null) {
-			if (item.getLhs() == start) {
-				return true;
-			}
-		}
-		return false;
-	}
+    /**
+     * Check if the set contains a final item.
+     *
+     * @param start Start symbol of grammar
+     * @return True iff the set contains a final item.
+     */
+    public boolean containsFinalItem(NonTerminal start) {
+        LR0Item item = getCompleteItem();
+        if (item != null) {
+            if (item.getLhs() == start) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	/**
-	 * Assuming there is one complete item in this set, return it. Returns null
-	 * if there is no complete item.
-	 * 
-	 * @return Complete item
-	 */
-	public LR0Item getCompleteItem() {
-		for (LR0Item item : this) {
-			if (!item.canShift()) {
-				return item;
-			}
-		}
-		return null;
-	}
+    /**
+     * Assuming there is one complete item in this set, return it. Returns null
+     * if there is no complete item.
+     *
+     * @return Complete item
+     */
+    public LR0Item getCompleteItem() {
+        for (LR0Item item : this) {
+            if (!item.canShift()) {
+                return item;
+            }
+        }
+        return null;
+    }
 
-	/*
+    /*
 	 * (non-Javadoc)
 	 * 
 	 * @see java.util.AbstractCollection#toString()
-	 */
-	public String toString() {
-		StringBuilder result = new StringBuilder();
-		Iterator<LR0Item> it = this.iterator();
-		while (it.hasNext()) {
-			result.append(it.next());
-			if (it.hasNext()) {
-				result.append(", ");
-			}
-		}
-		return result.toString();
-	}
+     */
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        Iterator<LR0Item> it = this.iterator();
+        while (it.hasNext()) {
+            result.append(it.next());
+            if (it.hasNext()) {
+                result.append(", ");
+            }
+        }
+        return result.toString();
+    }
 }
