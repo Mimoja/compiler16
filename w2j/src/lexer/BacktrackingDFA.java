@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-import lexer.LexerGenerator.Token;
+import symbols.Tokens.Token;
 import util.Pair;
 
 public class BacktrackingDFA {

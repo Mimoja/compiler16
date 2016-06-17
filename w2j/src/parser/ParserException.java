@@ -9,7 +9,7 @@ public class ParserException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	private List<Integer> analysisBeforeFailure = null;
+	private List<Rule> analysisBeforeFailure = null;
 
 	/**
 	 * Constructor.
@@ -35,7 +35,7 @@ public class ParserException extends Exception {
 	 * @param analysis
 	 *            Recognized rules up to the exception.
 	 */
-	public ParserException(String s, List<Integer> analysis) {
+	public ParserException(String s, List<Rule> analysis) {
 		this(s);
 		this.analysisBeforeFailure = analysis;
 	}
@@ -45,7 +45,7 @@ public class ParserException extends Exception {
 	 * 
 	 * @return List of rules recognized before the failure.
 	 */
-	public List<Integer> getAnalysisBeforeFailure() {
+	public List<Rule> getAnalysisBeforeFailure() {
 		return analysisBeforeFailure;
 	}
 }

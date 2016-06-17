@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import symbols.Tokens.Token;
 import util.Pair;
-import lexer.LexerGenerator.Token;
 
 /**
  * Abstract class for Deterministic Finite Automata.

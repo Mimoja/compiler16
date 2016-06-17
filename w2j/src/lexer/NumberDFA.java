@@ -1,6 +1,6 @@
 package lexer;
 
-import lexer.LexerGenerator.Token;
+import symbols.Tokens.Token;
 import util.Pair;
 
 import java.util.Arrays;
@@ -26,7 +26,7 @@ public class NumberDFA extends AbstractDFA {
 
 		for (int i = 0; i < LexerGenerator.numbers.length; i++) {
 			if (LexerGenerator.numbers[i] == '0') {
-				transitions.put(new Pair<Integer, Character>(initialState, LexerGenerator.numbers[i]), firstNull);				
+				transitions.put(new Pair<Integer, Character>(initialState, LexerGenerator.numbers[i]), firstNull);
 			} else {
 				transitions.put(new Pair<Integer, Character>(initialState, LexerGenerator.numbers[i]), finalState);
 			}
