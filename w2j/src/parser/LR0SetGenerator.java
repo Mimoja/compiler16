@@ -123,6 +123,29 @@ public class LR0SetGenerator {
         }
        
         addState(eps);
+        
+        //Create the other LR(0) sets
+        HashSet<LR0Item> alreadyShifted = new HashSet<LR0Item>();
+        added = true;
+        while(added){
+            added = false;
+            HashSet<LR0Set> toBeAdded = new HashSet<LR0Set>();
+            for(LR0Set set : states){
+                for(LR0Item item : set){
+                    if (item.canShift() && !alreadyShifted.contains(item)){
+                        LR0Item shifted = item.getShiftedItem();
+                        String setName = shifted.toString();
+                        LR0Set newSet = new LR0Set(setName);
+                        newSet.add(shifted);
+                        toBeAdded.add(newSet);
+                        added = true;
+                        alreadyShifted.add(item);
+                    }
+                }
+            }
+            states.addAll(toBeAdded);
+        }
+        
 	}
 
 	/**
