@@ -232,7 +232,9 @@ public class LR0SetGenerator {
 	 * @return LR(0) representing the epsilon closure.
 	 */
 	private LR0Set epsilonClosure(LR0Set set) {
-		// TODO it might be helpful to implement this method.
+		// what is an epsilon closure?
+		// there is nothing about it in the slides
+		// probably not needed, we can do without it
 
 		LR0Set result = new LR0Set(set.getName());
 		
