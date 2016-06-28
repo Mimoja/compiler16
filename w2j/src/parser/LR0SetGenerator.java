@@ -126,6 +126,7 @@ public class LR0SetGenerator {
         
         //Create the other LR(0) sets
         HashSet<LR0Item> alreadyShifted = new HashSet<LR0Item>();
+        HashSet<LR0Set> allSets = new HashSet<LR0Set>(states);
         added = true;
         while(added){
             added = false;
@@ -133,19 +134,61 @@ public class LR0SetGenerator {
             for(LR0Set set : states){
                 for(LR0Item item : set){
                     if (item.canShift() && !alreadyShifted.contains(item)){
+                        String setName = set.getName() + item.getShiftableSymbolName();
                         LR0Item shifted = item.getShiftedItem();
-                        String setName = arrayToString(shifted.getRhs());
-                        LR0Set newSet = new LR0Set(setName);
-                        newSet.add(shifted);
-                        toBeAdded.add(newSet);
-                        added = true;
+                        //see if we have to make a new set
+                        boolean found = false;
+                        for(LR0Set l : allSets){
+                            if(l.getName().equals(setName)){
+                                // just add it to the old set
+                                l.add(shifted);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found){
+                            // make a new set
+                            LR0Set newSet = new LR0Set(setName);
+                            newSet.add(shifted);
+                            toBeAdded.add(newSet);
+                            allSets.add(newSet);
+                        }
                         alreadyShifted.add(item);
+                        added = true;
                     }
                 }
             }
             states.addAll(toBeAdded);
         }
         
+        //Fill the LR(0) sets
+        for(LR0Set set : states){
+            added = true;
+            while(added){
+                added = false;
+                LR0Set toBeAdded = new LR0Set("i am garbage");
+                for(LR0Item item : set){
+                    NonTerminal n = item.getNextNonTerminal();
+                    if (n != null) {
+                        for(Rule r : grammar.getRules(n)){
+                            LR0Item newItem = LR0Item.freshItem(r);
+                            //is this item already in there?
+                            boolean found = false;
+                            for(LR0Item otherItem : set){
+                                if(otherItem.equals(newItem)){
+                                    found = true;
+                                }
+                            }
+                            if(!found){
+                                toBeAdded.add(newItem);
+                                added = true;
+                            }
+                        }
+                    }
+                }
+                set.addAll(toBeAdded);
+            }
+        }
 	}
         
         public String arrayToString(Alphabet[] alp)
