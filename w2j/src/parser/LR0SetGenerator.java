@@ -213,6 +213,25 @@ public class LR0SetGenerator {
             }
             states.addAll(toBeAdded);
         }
+        
+        //Add transitions
+        for(LR0Set I : states){
+            System.out.println(System.identityHashCode(I));
+            for(LR0Set X : states){
+                System.out.println(System.identityHashCode(X));
+            }
+            assert(states.contains(I));
+            for(Alphabet Y : I.getShiftableSymbols()){
+                for(LR0Item p : I.getShiftedItemsFor(Y)){
+                    for(LR0Set Inext : states){
+                        if (Inext.contains(p)){
+                            addTransition(I, Y, Inext);
+                        }
+                    }
+                }
+            }
+        }
+                
 	}
         
         public String arrayToString(Alphabet[] alp)
