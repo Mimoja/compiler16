@@ -72,8 +72,10 @@ public class LR0Parser {
 					throw new ParserException("Parser finished but there is input left!", analysis);
 				}
 				else // finished and no more input. good.
-				{
-					return analysis;
+			    {
+			        // make sure to add the final item.
+			        analysis.add(topset.getCompleteItem());
+		            return analysis;
 				}
 			}
 
@@ -107,7 +109,7 @@ public class LR0Parser {
 				// success!
 
 				// record rule in analysis
-				analysis.add(0, completeItem);
+				analysis.add(completeItem);
 
 				// and push next state to stack
 				stack.push(
