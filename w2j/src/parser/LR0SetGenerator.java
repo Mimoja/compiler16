@@ -134,7 +134,7 @@ public class LR0SetGenerator {
                 for(LR0Item item : set){
                     if (item.canShift() && !alreadyShifted.contains(item)){
                         LR0Item shifted = item.getShiftedItem();
-                        String setName = shifted.toString();
+                        String setName = arrayToString(shifted.getRhs());
                         LR0Set newSet = new LR0Set(setName);
                         newSet.add(shifted);
                         toBeAdded.add(newSet);
@@ -147,6 +147,15 @@ public class LR0SetGenerator {
         }
         
 	}
+        
+        public String arrayToString(Alphabet[] alp)
+        {
+            StringBuilder output = new StringBuilder();
+            for(Alphabet a : alp){
+                output.append(a);
+            }
+            return output.toString();
+        }
 
 	/**
 	 * Compute the epsilon closure for the given LR(0) set.
