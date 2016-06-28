@@ -6,9 +6,15 @@ import parser.ParserException;
 /**
  * Recursive descent parser for boolean expressions.
  * 
- * Grammar: 1. start -> guard 2. guard -> rel subguard 3. subguard -> eps 4.
- * subguard -> AND guard 5. subguard -> OR guard 6. rel -> ID subrel 7. subrel
- * -> EQ ID 8. subrel -> LEQ ID
+ * Grammar:
+ *  1. start -> guard
+ *  2. guard -> rel subguard
+ *  3. subguard -> eps
+ *  4. subguard -> AND guard
+ *  5. subguard -> OR guard
+ *  6. rel -> ID subrel
+ *  7. subrel -> EQ ID
+ *  8. subrel -> LEQ ID
  */
 public class RecursiveDescentParserBoolean extends RecursiveDescentParser {
 
