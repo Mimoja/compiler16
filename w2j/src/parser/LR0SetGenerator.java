@@ -122,17 +122,19 @@ public class LR0SetGenerator {
             toBeAdded = null;
         }
        
-        addState(eps);
+        HashSet<LR0Set> dummyStates = new HashSet<LR0Set>();
+        dummyStates.add(eps);
+
         initialState = eps;
         
         //Create the other LR(0) sets by shifting
         HashSet<LR0Item> alreadyShifted = new HashSet<LR0Item>();
-        HashSet<LR0Set> allSets = new HashSet<LR0Set>(states);
+        HashSet<LR0Set> allSets = new HashSet<LR0Set>(dummyStates);
         added = true;
         while(added){
             added = false;
             HashSet<LR0Set> toBeAdded = new HashSet<LR0Set>();
-            for(LR0Set set : states){
+            for(LR0Set set : dummyStates){
                 for(LR0Item item : set){
                     if (item.canShift() && !alreadyShifted.contains(item)){
                         String setName = set.getName() + item.getShiftableSymbolName();
@@ -159,11 +161,11 @@ public class LR0SetGenerator {
                     }
                 }
             }
-            states.addAll(toBeAdded);
+            dummyStates.addAll(toBeAdded);
         }
         
         //Fill the LR(0) sets
-        for(LR0Set set : states){
+        for(LR0Set set : dummyStates){
             added = true;
             while(added){
                 added = false;
@@ -197,12 +199,12 @@ public class LR0SetGenerator {
         while(added){
             added = false;
             HashSet<LR0Set> toBeAdded = new HashSet<LR0Set>();
-            for(LR0Set set : states){
+            for(LR0Set set : dummyStates){
                 for(LR0Item item : set){
                     if (item.canShift() && !alreadyShifted.contains(item)){
                         String setName = set.getName() + item.getShiftableSymbolName();
                         LR0Item shifted = item.getShiftedItem();
-                        for(LR0Set l : states){
+                        for(LR0Set l : dummyStates){
                             if(l.getName().equals(setName)){
                                 l.add(shifted);
                                 break;
@@ -211,27 +213,26 @@ public class LR0SetGenerator {
                     }
                 }
             }
-            states.addAll(toBeAdded);
+            dummyStates.addAll(toBeAdded);
         }
         
-        //Add transitions
+        //build state machine
+        for(LR0Set I : dummyStates){
+            addState(I);
+        }
+        //add Transition
         for(LR0Set I : states){
-            System.out.println(System.identityHashCode(I));
-            for(LR0Set X : states){
-                System.out.println(System.identityHashCode(X));
-            }
-            assert(states.contains(I));
             for(Alphabet Y : I.getShiftableSymbols()){
                 for(LR0Item p : I.getShiftedItemsFor(Y)){
-                    for(LR0Set Inext : states){
-                        if (Inext.contains(p)){
+                    for(LR0Set Inext : dummyStates){
+                        if (Inext.contains(p)
+                    && (!transitions.containsKey(new Pair<LR0Set, Alphabet>(I, Y)))){
                             addTransition(I, Y, Inext);
                         }
                     }
                 }
             }
-        }
-                
+        }    
 	}
         
         public String arrayToString(Alphabet[] alp)
