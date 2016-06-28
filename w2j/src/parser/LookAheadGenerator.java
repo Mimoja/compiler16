@@ -116,7 +116,7 @@ public class LookAheadGenerator {
 	 */
 	public void printFirstSets() {
 		for (NonTerminal nonTerminal : first.keySet()) {
-			System.out.print("fi(" + nonTerminal + "): {");
+			System.out.print("    fi(" + nonTerminal + "): {");
 			Iterator<Alphabet> iter = first.get(nonTerminal).iterator();
 			while (iter.hasNext()) {
 				System.out.print(iter.next());
@@ -133,7 +133,7 @@ public class LookAheadGenerator {
 	 */
 	public void printFollowSets() {
 		for (NonTerminal nonTerminal : follow.keySet()) {
-			System.out.print("fo(" + nonTerminal + "): {");
+			System.out.print("    fo(" + nonTerminal + "): {");
 			Iterator<Alphabet> iter = follow.get(nonTerminal).iterator();
 			while (iter.hasNext()) {
 				System.out.print(iter.next());
