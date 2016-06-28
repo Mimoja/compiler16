@@ -123,6 +123,7 @@ public class LR0SetGenerator {
         }
        
         addState(eps);
+        initialState = eps;
         
         //Create the other LR(0) sets
         HashSet<LR0Item> alreadyShifted = new HashSet<LR0Item>();
