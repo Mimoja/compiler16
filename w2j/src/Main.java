@@ -48,6 +48,7 @@ public class Main {
 		try {
 			symbols = LexerGenerator.analyse(inputProgram);
 			System.out.println("Symbol stream: " + symbols);
+			System.out.println();
 		} catch (LexerException e) {
 			System.out.println("LexErr");
 			System.out.println(e.getMessage());
@@ -70,25 +71,26 @@ public class Main {
 
 		// Compute LR(0) sets
 		System.out.println("Exercise (a)");
-		System.out.println("GrammarLR0");
+		System.out.println("    GrammarLR0");
 		AbstractGrammar grammarLR0 = GrammarLR0.getInstance();
 		LR0SetGenerator generatorLR0 = new LR0SetGenerator(grammarLR0);
-		System.out.println("LR(0) sets:");
+		System.out.println("    LR(0) sets:");
 		generatorLR0.printLR0Sets();
-		System.out.println("There are " + generatorLR0.nrStates() + " LR(0) sets.");
+		System.out.println("    There are " + generatorLR0.nrStates() + " LR(0) sets.");
 		System.out.println();
 
-		System.out.println("GrammarSLR1");
+		System.out.println("    GrammarSLR1");
 		AbstractGrammar grammarSLR1 = GrammarSLR1.getInstance();
 		LR0SetGenerator generatorSLR1 = new LR0SetGenerator(grammarSLR1);
-		System.out.println("LR(0) sets:");
+		System.out.println("    LR(0) sets:");
 		generatorSLR1.printLR0Sets();
-		System.out.println("There are " + generatorSLR1.nrStates() + " LR(0) sets.");
+		System.out.println("    There are " + generatorSLR1.nrStates() + " LR(0) sets.");
 		System.out.println();
 		
 		System.out.println("Exercise (b)");
-		System.out.println(generatorLR0.nrConflicts() + " conflicts were detected for GrammarLR0.");
-		System.out.println(generatorSLR1.nrConflicts() + " conflicts were detected for GrammarSLR1.");
+		System.out.println("    " + generatorLR0.nrConflicts() + " conflicts were detected for GrammarLR0.");
+		System.out.println("    " + generatorSLR1.nrConflicts() + " conflicts were detected for GrammarSLR1.");
+		System.out.println();
 
 		// LR(0) parser
 		System.out.println("Exercise (c)");
@@ -96,28 +98,28 @@ public class Main {
 		List<Rule> analysisLR0 = null;
 		try {
 			analysisLR0 = parserLR0.parse(symbols);
-			System.out.print("LR(0) parsing result: ");
+			System.out.print("    LR(0) parsing result: ");
 			System.out.println(analysisLR0);
 		} catch (ParserException e) {
-			System.out.println("ParseErr");
-			System.out.println(e.getMessage());
-			System.out.println(e.getAnalysisBeforeFailure());
+			System.out.println("    ParseErr");
+			System.out.println("    " + e.getMessage());
+			System.out.println("    " + e.getAnalysisBeforeFailure());
 		}
 		System.out.println();
 
 		// Compute first and follow sets
 		System.out.println("Exercise (d)");
 		LookAheadGenerator generatorLookAheadLR0 = new LookAheadGenerator(grammarLR0);
-		System.out.println("First sets for GrammarLR0:");
+		System.out.println("    First sets for GrammarLR0:");
 		generatorLookAheadLR0.printFirstSets();
-		System.out.println("Follow sets for GrammarLR0:");
+		System.out.println("    Follow sets for GrammarLR0:");
 		generatorLookAheadLR0.printFollowSets();
 		System.out.println();
 
 		LookAheadGenerator generatorLookAheadSLR1 = new LookAheadGenerator(grammarSLR1);
-		System.out.println("First sets for GrammarSLR1:");
+		System.out.println("    First sets for GrammarSLR1:");
 		generatorLookAheadSLR1.printFirstSets();
-		System.out.println("Follow sets for GrammarSLR1:");
+		System.out.println("    Follow sets for GrammarSLR1:");
 		generatorLookAheadSLR1.printFollowSets();
 		System.out.println();
 
@@ -127,11 +129,11 @@ public class Main {
 		List<Rule> analysisSLR1 = null;
 		try {
 			analysisSLR1 = parserSLR1.parse(symbols);
-			System.out.println(analysisSLR1);
+			System.out.println("    " + analysisSLR1);
 		} catch (ParserException e) {
-			System.out.println("ParseErr");
-			System.out.println(e.getMessage());
-			System.out.println(e.getAnalysisBeforeFailure());
+			System.out.println("    ParseErr");
+			System.out.println("    " + e.getMessage());
+			System.out.println("    " + e.getAnalysisBeforeFailure());
 		}
 
 		// Semantical Analysis

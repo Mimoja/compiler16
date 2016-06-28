@@ -269,7 +269,7 @@ public class LR0SetGenerator {
 	 */
 	public void printLR0Sets() {
 		for (LR0Set set : states) {
-			System.out.println(set.getName() + ": " + set);
+			System.out.println("    " + set.getName() + ": " + set);
 		}
 	}
 

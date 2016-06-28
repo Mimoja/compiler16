@@ -13,8 +13,8 @@ $(BUILDPATH)/Main.class: $(SRCS)
 
 
 run-tests: $(BUILDPATH)/Main.class
-	for t in tests/*.txt; do \
-		echo; echo $$t; \
+	for t in `find tests -name '*.txt'`; do \
+		echo; echo ">>>>>> $$t <<<<<<"; \
 		$(JAVA) -ea -cp $(BUILDPATH) Main $$t; \
 	done
 
