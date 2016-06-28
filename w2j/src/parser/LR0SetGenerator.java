@@ -107,16 +107,19 @@ public class LR0SetGenerator {
         HashSet<NonTerminal> alreadyAdded = new HashSet<NonTerminal>();
         while(added){
             added = false;
+            LR0Set toBeAdded = new LR0Set("add these please");
             for(LR0Item i : eps){
                 NonTerminal n = i.getNextNonTerminal();
                 if(n != null && !alreadyAdded.contains(n)){
                     for(Rule r : grammar.getRules(n)){
-                        eps.add(LR0Item.freshItem(r));
+                        toBeAdded.add(LR0Item.freshItem(r));
                     }
                     alreadyAdded.add(n);
                     added = true;
         	    }
             }
+            eps.addAll(toBeAdded);
+            toBeAdded = null;
         }
        
         addState(eps);
