@@ -1,7 +1,9 @@
 package parser;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import parser.grammar.AbstractGrammar;
 import symbols.Alphabet;
@@ -41,9 +43,33 @@ public class LookAheadGenerator {
 	 */
 	public void computeFirst() {
 		first = new MapSet<NonTerminal, Alphabet>();
-		// TODO implement
+		for(NonTerminal nonTerminal : NonTerminal.values()){
+                    List<Rule> rulz = grammar.getRules(nonTerminal);
+                    if(!rulz.isEmpty()){
+                        Set<Alphabet> a = computeFirstSet(rulz, new HashSet<NonTerminal>());
+                        first.put(nonTerminal, a);
+                    }
+		}
 
 	}
+       	private HashSet<Alphabet> computeFirstSet(List<Rule> rules, Set<NonTerminal> computed){
+		HashSet<Alphabet> toBeAdded = new HashSet<>();
+		if(!computed.contains(rules.get(0).getLhs())){
+			for(Rule r : rules){
+                            Alphabet rhs[] = r.getRhs();
+                            Alphabet rhsStart = rhs[0];
+                            if(rhsStart instanceof Token){
+                                toBeAdded.add(r.getRhs()[0]);
+                            } else {
+                                NonTerminal symb = (NonTerminal)r.getRhs()[0];
+                                computed.add(r.getLhs());
+                                toBeAdded.addAll(computeFirstSet(grammar.getRules(symb), computed));
+                            }
+			}
+		}
+		return toBeAdded;
+	}
+	
 
 	/**
 	 * Compute the follow set for each non-terminal. Assume that the first sets
