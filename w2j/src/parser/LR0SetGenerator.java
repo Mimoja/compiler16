@@ -90,21 +90,36 @@ public class LR0SetGenerator {
 	 * Generate all LR(0) sets for the given grammar.
 	 */
 	private void generateLR0StateSpace() {
-            LR0Set StartToS = new LR0Set("");
-            
-            //Find start -> S
-            for(Rule r : grammar.getRules()){
-                if(r.getLhs() == grammar.getStart()){
-                    Alphabet[] rhs = r.getRhs();
-                    assert(rhs.length == 1);
-                    assert(rhs[0] instanceof NonTerminal);
-                    StartToS.add(new LR0Item(r.getLhs(), rhs, 0));
-                }
+        LR0Set eps = new LR0Set("");
+        
+        //Find start -> S
+        for(Rule r : grammar.getRules()){
+            if(r.getLhs() == grammar.getStart()){
+                Alphabet[] rhs = r.getRhs();
+                assert(rhs.length == 1);
+                assert(rhs[0] instanceof NonTerminal);
+                eps.add(new LR0Item(r.getLhs(), rhs, 0));
             }
-            
-            
-           
-            addState(StartToS);
+        }
+        
+        //Fill LR(0)(eps)
+        boolean added = true;
+        HashSet<NonTerminal> alreadyAdded = new HashSet<NonTerminal>();
+        while(added){
+            added = false;
+            for(LR0Item i : eps){
+                NonTerminal n = i.getNextNonTerminal();
+                if(n != null && !alreadyAdded.contains(n)){
+                    for(Rule r : grammar.getRules(n)){
+                        eps.add(LR0Item.freshItem(r));
+                    }
+                    alreadyAdded.add(n);
+                    added = true;
+        	    }
+            }
+        }
+       
+        addState(eps);
 	}
 
 	/**
