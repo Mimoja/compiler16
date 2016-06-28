@@ -3,6 +3,7 @@ package parser;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import parser.grammar.AbstractGrammar;
@@ -77,10 +78,21 @@ public class LookAheadGenerator {
 	 */
 	public void computeFollow() {
 		assert (first != null);
-
 		follow = new MapSet<NonTerminal, Alphabet>();
-		// TODO implement
 
+		/* ε ∈ fo( S ) */
+		follow.add(symbols.NonTerminals.NonTerminal.S,
+				symbols.Tokens.Epsilon.EPS);
+
+		/* A → α B β ∈ P, a ∈ fi(β) ⇒ a ∈ fo( B ) */
+		for (Map.Entry<NonTerminal, Set<Alphabet>> e: first.entrySet()) {
+			NonTerminal   lhs = e.getKey();
+			Set<Alphabet> rhs = e.getValue();
+
+			// ???
+		}
+
+		/* A → α B β ∈ P, ε ∈ fi(β), x ∈ fo( A ) ⇒ x ∈ fo( B ) */
 	}
 
 	/**
