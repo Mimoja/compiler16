@@ -13,7 +13,7 @@ $(BUILDPATH)/Main.class: $(SRCS)
 
 
 run-tests: $(BUILDPATH)/Main.class
-	for t in tests/*parser/*.txt; do \
+	for t in tests/lr0parser/*.txt; do \
 		echo; echo ">>>>>> $$t <<<<<<"; \
 		$(JAVA) -ea -cp $(BUILDPATH) Main $$t; \
 	done

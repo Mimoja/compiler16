@@ -45,32 +45,46 @@ public class LookAheadGenerator {
 	public void computeFirst() {
 		first = new MapSet<NonTerminal, Alphabet>();
 		for(NonTerminal nonTerminal : NonTerminal.values()){
-                    List<Rule> rulz = grammar.getRules(nonTerminal);
-                    if(!rulz.isEmpty()){
-                        Set<Alphabet> a = computeFirstSet(rulz, new HashSet<NonTerminal>());
-                        first.put(nonTerminal, a);
-                    }
+            List<Rule> rulz = grammar.getRules(nonTerminal);
+            if(!rulz.isEmpty()){
+                Set<Alphabet> a = computeFirstSet(rulz, new HashSet<NonTerminal>());
+                first.put(nonTerminal, a);
+            }
 		}
 
 	}
-       	private HashSet<Alphabet> computeFirstSet(List<Rule> rules, Set<NonTerminal> computed){
+
+   	private HashSet<Alphabet> computeFirstSet(List<Rule> rules, Set<NonTerminal> computed){
 		HashSet<Alphabet> toBeAdded = new HashSet<>();
 		if(!computed.contains(rules.get(0).getLhs())){
 			for(Rule r : rules){
-                            Alphabet rhs[] = r.getRhs();
-                            Alphabet rhsStart = rhs[0];
-                            if(rhsStart instanceof Token){
-                                toBeAdded.add(r.getRhs()[0]);
-                            } else {
-                                NonTerminal symb = (NonTerminal)r.getRhs()[0];
-                                computed.add(r.getLhs());
-                                toBeAdded.addAll(computeFirstSet(grammar.getRules(symb), computed));
-                            }
+                Alphabet rhs[] = r.getRhs();
+                Alphabet rhsStart = rhs[0];
+                if(rhsStart instanceof Token){
+                    toBeAdded.add(r.getRhs()[0]);
+                } else {
+                    NonTerminal symb = (NonTerminal)r.getRhs()[0];
+                    computed.add(r.getLhs());
+                    toBeAdded.addAll(computeFirstSet(grammar.getRules(symb), computed));
+                }
 			}
 		}
 		return toBeAdded;
 	}
 	
+	/**
+	 * Try to add an entry to follow
+	 * 
+	 * @return true iff an entry was inserted
+	 *
+	 */
+	public boolean tryAddToFollow(NonTerminal B, Alphabet X){
+	    if(!follow.containsKey(B) || !follow.get(B).contains(X)){
+            follow.add(B, X);
+            return true;
+        }
+        return false;
+    }
 
 	/**
 	 * Compute the follow set for each non-terminal. Assume that the first sets
@@ -81,18 +95,45 @@ public class LookAheadGenerator {
 		follow = new MapSet<NonTerminal, Alphabet>();
 
 		/* ε ∈ fo( S ) */
-		follow.add(symbols.NonTerminals.NonTerminal.S,
+		follow.add(grammar.getStart(),
 				symbols.Tokens.Epsilon.EPS);
 
-		/* A → α B β ∈ P, a ∈ fi(β) ⇒ a ∈ fo( B ) */
-		for (Map.Entry<NonTerminal, Set<Alphabet>> e: first.entrySet()) {
-			NonTerminal   lhs = e.getKey();
-			Set<Alphabet> rhs = e.getValue();
-
-			// ???
+		
+		boolean added = true;
+		while(added) {
+		    added = false;
+		    for(Rule r: grammar.getRules()) {
+		        NonTerminal A = r.getLhs();
+		        for(int i = 0; i < r.getRhs().length-1; i++){
+		            if(r.getRhs()[i] instanceof NonTerminal){
+		                NonTerminal B = (NonTerminal)r.getRhs()[i];
+		                if(r.getRhs()[i+1] instanceof NonTerminal){
+		                    NonTerminal b = (NonTerminal)r.getRhs()[i+1];
+		                    if(first.containsKey(b)){
+		                        /* A → α B β ∈ P, a ∈ fi(β) ⇒ a ∈ fo( B ) */
+		                        for(Alphabet X : first.get(b)){
+		                            added |= tryAddToFollow(B, X);
+		                        }
+		                    }
+		                } else {
+		                    added |= tryAddToFollow(B, r.getRhs()[i+1]);
+		                }
+	                    /* A → α B β ∈ P, ε ∈ fi(β), x ∈ fo( A ) ⇒ x ∈ fo( B ) */
+	                    if(first.get(B).contains(symbols.Tokens.Epsilon.EPS)){
+	                        for(Alphabet Y : follow.get(A)){
+	                            added |= tryAddToFollow(B, Y);  
+	                        }
+	                    }
+		            }
+		        }
+		        if(r.getRhs()[r.getRhs().length-1] instanceof NonTerminal){
+		            NonTerminal b = (NonTerminal)r.getRhs()[r.getRhs().length-1];
+                    for(Alphabet Y : follow.get(A)){
+		                added |= tryAddToFollow(b, Y);       
+                    }
+                }
+		    }
 		}
-
-		/* A → α B β ∈ P, ε ∈ fi(β), x ∈ fo( A ) ⇒ x ∈ fo( B ) */
 	}
 
 	/**
