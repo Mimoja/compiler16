@@ -27,7 +27,7 @@ public class LexerGenerator {
 
 	// Special characters like parenthesis, line breaks, ...
 	final static protected char[] special = { ':', '=', '(', ')', '{', '}', '+', '-', '*', '/', '<', '>', '!', '%', '$',
-			'&', '|', ';', '"', ' ', '\t', '\r', '\n' };
+			'&', '|', ';', '"', ' ', '\t', '\r', '\n' , ',', '.'};
 
 	/**
 	 * Perform the lexer analysis.

@@ -90,159 +90,45 @@ public class LR0SetGenerator {
 	 * Generate all LR(0) sets for the given grammar.
 	 */
 	private void generateLR0StateSpace() {
-        LR0Set eps = new LR0Set("");
-        
-        //Find start -> S
-        for(Rule r : grammar.getRules()){
-            if(r.getLhs() == grammar.getStart()){
-                Alphabet[] rhs = r.getRhs();
-                assert(rhs.length == 1);
-                assert(rhs[0] instanceof NonTerminal);
-                eps.add(new LR0Item(r.getLhs(), rhs, 0));
-            }
-        }
-        
-        //Fill LR(0)(eps)
-        boolean added = true;
-        HashSet<NonTerminal> alreadyAdded = new HashSet<NonTerminal>();
-        while(added){
-            added = false;
-            LR0Set toBeAdded = new LR0Set("add these please");
-            for(LR0Item i : eps){
-                NonTerminal n = i.getNextNonTerminal();
-                if(n != null && !alreadyAdded.contains(n)){
-                    for(Rule r : grammar.getRules(n)){
-                        toBeAdded.add(LR0Item.freshItem(r));
-                    }
-                    alreadyAdded.add(n);
-                    added = true;
-        	    }
-            }
-            eps.addAll(toBeAdded);
-            toBeAdded = null;
-        }
-       
-        HashSet<LR0Set> dummyStates = new HashSet<LR0Set>();
-        dummyStates.add(eps);
+		// TODO implement state space generation
 
-        initialState = eps;
-        
-        //Create the other LR(0) sets by shifting
-        HashSet<LR0Item> alreadyShifted = new HashSet<LR0Item>();
-        HashSet<LR0Set> allSets = new HashSet<LR0Set>(dummyStates);
-        added = true;
-        while(added){
-            added = false;
-            HashSet<LR0Set> toBeAdded = new HashSet<LR0Set>();
-            for(LR0Set set : dummyStates){
-                for(LR0Item item : set){
-                    if (item.canShift() && !alreadyShifted.contains(item)){
-                        String setName = set.getName() + item.getShiftableSymbolName();
-                        LR0Item shifted = item.getShiftedItem();
-                        //see if we have to make a new set
-                        boolean found = false;
-                        for(LR0Set l : allSets){
-                            if(l.getName().equals(setName)){
-                                // just add it to the old set
-                                l.add(shifted);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if(!found){
-                            // make a new set
-                            LR0Set newSet = new LR0Set(setName);
-                            newSet.add(shifted);
-                            toBeAdded.add(newSet);
-                            allSets.add(newSet);
-                        }
-                        alreadyShifted.add(item);
-                        added = true;
-                    }
-                }
-            }
-            dummyStates.addAll(toBeAdded);
-        }
-        
-        //Fill the LR(0) sets
-        for(LR0Set set : dummyStates){
-            added = true;
-            while(added){
-                added = false;
-                LR0Set toBeAdded = new LR0Set("i am garbage");
-                for(LR0Item item : set){
-                    NonTerminal n = item.getNextNonTerminal();
-                    if (n != null) {
-                        for(Rule r : grammar.getRules(n)){
-                            LR0Item newItem = LR0Item.freshItem(r);
-                            //is this item already in there?
-                            boolean found = false;
-                            for(LR0Item otherItem : set){
-                                if(otherItem.equals(newItem)){
-                                    found = true;
-                                }
-                            }
-                            if(!found){
-                                toBeAdded.add(newItem);
-                                added = true;
-                            }
-                        }
-                    }
-                }
-                set.addAll(toBeAdded);
-            }
-        }
-        
-        //Shift once more, not creating new sets.
-        alreadyShifted = new HashSet<LR0Item>();
-        added = true;
-        while(added){
-            added = false;
-            HashSet<LR0Set> toBeAdded = new HashSet<LR0Set>();
-            for(LR0Set set : dummyStates){
-                for(LR0Item item : set){
-                    if (item.canShift() && !alreadyShifted.contains(item)){
-                        String setName = set.getName() + item.getShiftableSymbolName();
-                        LR0Item shifted = item.getShiftedItem();
-                        for(LR0Set l : dummyStates){
-                            if(l.getName().equals(setName)){
-                                l.add(shifted);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            dummyStates.addAll(toBeAdded);
-        }
-        
-        //build state machine
-        for(LR0Set I : dummyStates){
-            addState(I);
-        }
-        //add Transition
-        for(LR0Set I : states){
-            for(Alphabet Y : I.getShiftableSymbols()){
-                for(LR0Item p : I.getShiftedItemsFor(Y)){
-                    for(LR0Set Inext : dummyStates){
-                        if (Inext.contains(p)
-                    && (!transitions.containsKey(new Pair<LR0Set, Alphabet>(I, Y)))){
-                            addTransition(I, Y, Inext);
-                        }
-                    }
-                }
-            }
-        }    
+		// Start with the empty word
+		LR0Set epsilon = new LR0Set("");
+		assert (grammar.getRules(NonTerminal.START).size() == 1);
+		Rule startRule = grammar.getRules(grammar.getStart()).get(0);
+		epsilon.add(LR0Item.freshItem(startRule));
+		epsilon.addAll(epsilonClosure(epsilon));
+		addState(epsilon);
+		initialState = epsilon;
+
+		// While new sets were added continue building
+		Queue<LR0Set> queue = new LinkedList<LR0Set>();
+		queue.add(epsilon);
+		while (!queue.isEmpty()) {
+			LR0Set set = queue.poll();
+			for (Alphabet symbol : set.getShiftableSymbols()) {
+				LR0Set newSet = new LR0Set(set.getName() + symbol);
+				newSet.addAll(set.getShiftedItemsFor(symbol));
+				newSet.addAll(epsilonClosure(newSet));
+				if (!states.contains(newSet)) {
+					// New state
+					queue.add(newSet);
+					addState(newSet);
+				} else {
+					// State already exists
+					for (LR0Set state : states) {
+						if (state.equals(newSet)) {
+							newSet = state;
+							break;
+						}
+					}
+				}
+				if (!transitions.containsKey(new Pair<LR0Set, Alphabet>(set, symbol))) {
+					addTransition(set, symbol, newSet);
+				}
+			}
+		}
 	}
-        
-        public String arrayToString(Alphabet[] alp)
-        {
-            StringBuilder output = new StringBuilder();
-            for(Alphabet a : alp){
-                output.append(a);
-            }
-            return output.toString();
-        }
 
 	/**
 	 * Compute the epsilon closure for the given LR(0) set.
@@ -252,13 +138,41 @@ public class LR0SetGenerator {
 	 * @return LR(0) representing the epsilon closure.
 	 */
 	private LR0Set epsilonClosure(LR0Set set) {
-		// what is an epsilon closure?
-		// there is nothing about it in the slides
-		// probably not needed, we can do without it
-
-		LR0Set result = new LR0Set(set.getName());
+		// TODO it might be helpful to implement this method.
 		
-		return result;
+		LR0Set result = new LR0Set(set.getName());
+		ArrayList<NonTerminal> nonTerminals = new ArrayList<NonTerminal>();
+
+		// For every item of the form A -> alpha * B gamma
+		// collect the nonterminal to the right of *
+		for (LR0Item item : set) {
+			NonTerminal n = item.getNextNonTerminal();
+			if (n != null) {
+				nonTerminals.add(n);
+			}
+		}
+
+		for (NonTerminal nonTerminal : nonTerminals) {
+			for (LR0Item item : freshItems(nonTerminal)) {
+				// Here we prevent the addition of items that were there
+				// already,
+				// without this we might run into infinite recursion!
+				if (!set.contains(item))
+					result.add(item);
+			}
+		}
+
+		// Recursively continue the closure since the above procedure might have
+		// introduced an item like [S->.Aa] etc...
+		// The recursion terminates when no *new* items of the above form can be
+		// found
+		if (result.size() > 0) {
+			result.addAll(set);
+			result.addAll(epsilonClosure(result));
+			return result;
+		} else {
+			return set;
+		}
 	}
 
 	/**
@@ -315,7 +229,7 @@ public class LR0SetGenerator {
 	 */
 	public void printLR0Sets() {
 		for (LR0Set set : states) {
-			System.out.println("    " + set.getName() + ": " + set);
+			System.out.println(set.getName() + ": " + set);
 		}
 	}
 

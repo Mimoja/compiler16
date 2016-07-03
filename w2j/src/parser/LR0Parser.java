@@ -5,10 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import util.Pair;
 import lexer.Symbol;
 import parser.grammar.AbstractGrammar;
-import symbols.Alphabet;
 import symbols.NonTerminals.NonTerminal;
 import symbols.Tokens.Token;
 
@@ -46,95 +44,66 @@ public class LR0Parser {
 	public List<Rule> parse(List<Symbol> lexOutput) throws ParserException {
 		List<Rule> analysis = new LinkedList<Rule>();
 
-		// implementation: see Def 9.8
+		// TODO implement LR(0) parser
 
-		// to fetch symbols from lexer (represents w)
-		Iterator<Symbol> symbols = lexOutput.iterator();
+		Iterator<Symbol> it = lexOutput.iterator();
+		Stack<LR0Set> stack = new Stack<LR0Set>();
 
-		// need a stack, contains (Alphabet,LR0Set) tuples
-		Stack<Pair<Alphabet, LR0Set>> stack = new Stack<Pair<Alphabet, LR0Set>>();
+		stack.push(generatorLR0.getInitialState());
 
-		// initialize with initial state (w, I_0, \varepsilon)
-		stack.push(
-			new Pair<Alphabet, LR0Set>(null, generatorLR0.getInitialState())
-		);
-
-		while (!stack.isEmpty())
-		{
-			Pair<Alphabet,LR0Set> top = stack.peek();
-			LR0Set topset = top.getSecond();
-
-			// final item?
-			if (topset.containsFinalItem(start))
-			{
-				if (symbols.hasNext()) // finished but more input?
-				{
-					throw new ParserException("Parser finished but there is input left!", analysis);
+		while (!stack.isEmpty()) {
+			LR0Set currentSet = stack.peek();
+			if (currentSet.containsFinalItem(start)) {
+				// we do not actually have to empty the stack now
+				if (!it.hasNext()) {
+					// input completely read
+					analysis.add(currentSet.getCompleteItem());
+					return analysis;
+				} else {
+					// Parser finished but there is more input
+					throw new ParserException("Parser finished but there is more unprocessed input!", analysis);
 				}
-				else // finished and no more input. good.
-			    {
-			        // make sure to add the final item.
-			        analysis.add(topset.getCompleteItem());
-		            return analysis;
+			} else {
+				if (currentSet.containsCompleteItem()) {
+					// Item of the form [A -> alpha *]
+					// Reduce
+					LR0Item completeItem = currentSet.getCompleteItem();
+					// remove |alpha| elements from the stack
+					for (int i = 0; i < completeItem.getRhs().length; i++) {
+						stack.pop();
+					}
+					// I' := Top(stack)
+					currentSet = stack.peek();
+					// J := delta(I', A)
+					LR0Set succState = generatorLR0.getSuccessor(currentSet, completeItem.getLhs());
+					if (succState == null) {
+						throw new ParserException(
+								"Tried reducing with rule " + completeItem + " but could not find a successor delta("
+										+ currentSet + ", " + completeItem.getLhs() + ")",
+								analysis);
+					}
+					stack.push(succState);
+					// append the applied rule (ensures correct order)
+					analysis.add(completeItem);
+				} else {
+					// Shift
+					if (!it.hasNext()) {
+						// nothing more to read, nothing to reduce and no final
+						// item
+						throw new ParserException("Only shift operation possible but the input terminated", analysis);
+					} else {
+						Token symbol = it.next().getToken();
+						LR0Set succState = generatorLR0.getSuccessor(currentSet, symbol);
+						if (null == succState) {
+							throw new ParserException(
+									"Tried shifting " + symbol + " onto the stack but could not find a successor delta("
+											+ currentSet + ", " + symbol + ")",
+									analysis);
+						} else {
+							stack.push(succState);
+						}
+					}
 				}
-			}
-
-			// not finished.
-
-			// check for complete item (form [A -> alpha.])...
-			if (topset.containsCompleteItem())
-			{
-				// complete item -> reduce
-
-				LR0Item completeItem = topset.getCompleteItem();
-				NonTerminal lhs = completeItem.getLhs();
-				Alphabet[] rhs = completeItem.getRhs();
-
-				for (int i = 0; i < rhs.length; i += 1)
-					stack.pop();
-
-				// compute transition on topmost item on stack
-				// I := ...
-				Pair<Alphabet,LR0Set> prevtop = stack.peek();
-
-				// J := delta(I, A)
-				LR0Set nextstate = generatorLR0.getSuccessor(
-					prevtop.getSecond(),
-					lhs
-				);
-
-				if (nextstate == null)
-					throw new ParserException("Reduce using " + completeItem + ": getSuccessor("+ prevtop.getSecond() + ", " + lhs + ") failed!", analysis);
-
-				// success!
-
-				// record rule in analysis
-				analysis.add(completeItem);
-
-				// and push next state to stack
-				stack.push(
-					new Pair<Alphabet,LR0Set>(lhs, nextstate)
-				);
-			}
-			else
-			{
-				// not a complete item -> shift (try to)
-
-				if (!symbols.hasNext())
-					throw new ParserException("Supposed to shift, but no input left!", analysis);
-
-				// we can shift
-				Token token = symbols.next().getToken();
-
-				// compute successor or fail
-				LR0Set nextstate =
-					generatorLR0.getSuccessor(topset, token);
-				if (nextstate == null)
-					throw new ParserException("Can't shift " + token + " onto stack because there is no delta(" + topset + ", " + token + ")", analysis);
-
-				stack.push(
-					new Pair<Alphabet,LR0Set>(token, nextstate)
-				);
 			}
 		}
 

@@ -1,10 +1,7 @@
 package parser;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import parser.grammar.AbstractGrammar;
 import symbols.Alphabet;
@@ -44,47 +41,64 @@ public class LookAheadGenerator {
 	 */
 	public void computeFirst() {
 		first = new MapSet<NonTerminal, Alphabet>();
-		for(NonTerminal nonTerminal : NonTerminal.values()){
-            List<Rule> rulz = grammar.getRules(nonTerminal);
-            if(!rulz.isEmpty()){
-                Set<Alphabet> a = computeFirstSet(rulz, new HashSet<NonTerminal>());
-                first.put(nonTerminal, a);
-            }
-		}
+		// TODO implement
 
-	}
-
-   	private HashSet<Alphabet> computeFirstSet(List<Rule> rules, Set<NonTerminal> computed){
-		HashSet<Alphabet> toBeAdded = new HashSet<>();
-		if(!computed.contains(rules.get(0).getLhs())){
-			for(Rule r : rules){
-                Alphabet rhs[] = r.getRhs();
-                Alphabet rhsStart = rhs[0];
-                if(rhsStart instanceof Token){
-                    toBeAdded.add(r.getRhs()[0]);
-                } else {
-                    NonTerminal symb = (NonTerminal)r.getRhs()[0];
-                    computed.add(r.getLhs());
-                    toBeAdded.addAll(computeFirstSet(grammar.getRules(symb), computed));
-                }
+		List<Rule> rules = grammar.getRules();
+		Iterator<Rule> iter = rules.iterator();
+		while (iter.hasNext()) {
+			Rule rule = iter.next();
+			if (rule.getRhs().length > 0) {
+				// Add terminal symbol to first set
+				if (rule.getRhs()[0] instanceof Token) {
+					first.add(rule.getLhs(), rule.getRhs()[0]);
+					// Rule is not important anymore
+					iter.remove();
+				}
+			} else {
+				// Add epsilon to first set
+				first.add(rule.getLhs(), Epsilon.EPS);
+				// Rule is not important anymore
+				iter.remove();
 			}
 		}
-		return toBeAdded;
+
+		// Repeat until fix point is reached
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+
+			for (Rule rule : rules) {
+				NonTerminal nonTerminal = rule.getLhs();
+				// Iterate over all symbols
+				for (int i = 0; i < rule.getRhs().length; i++) {
+					if (rule.getRhs()[i] instanceof Token) {
+						if (!first.contains(nonTerminal, rule.getRhs()[i])) {
+							// The symbol is a terminal and we take it
+							first.add(nonTerminal, rule.getRhs()[i]);
+							changed = true;
+						}
+						break;
+					} else {
+						boolean foundEpsilon = false;
+						assert (rule.getRhs()[i] instanceof NonTerminal);
+						NonTerminal newNonTerminal = (NonTerminal) rule.getRhs()[i];
+						for (Alphabet symbol : first.get(newNonTerminal)) {
+							if (!first.contains(nonTerminal, symbol)) {
+								first.add(nonTerminal, symbol);
+								changed = true;
+							}
+							if (symbol.equals(Epsilon.EPS)) {
+								foundEpsilon = true;
+							}
+						}
+						if (!foundEpsilon) {
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
-	
-	/**
-	 * Try to add an entry to follow
-	 * 
-	 * @return true iff an entry was inserted
-	 *
-	 */
-	public boolean tryAddToFollow(NonTerminal B, Alphabet X){
-	    if(!follow.containsKey(B) || !follow.get(B).contains(X)){
-            follow.add(B, X);
-            return true;
-        }
-        return false;
-    }
 
 	/**
 	 * Compute the follow set for each non-terminal. Assume that the first sets
@@ -92,47 +106,77 @@ public class LookAheadGenerator {
 	 */
 	public void computeFollow() {
 		assert (first != null);
+
 		follow = new MapSet<NonTerminal, Alphabet>();
+		// TODO implement
 
-		/* ε ∈ fo( S ) */
-		follow.add(grammar.getStart(),
-				symbols.Tokens.Epsilon.EPS);
+		// Add epsilon to start symbol
+		follow.add(grammar.getStart(), Epsilon.EPS);
 
-		
-		boolean added = true;
-		while(added) {
-		    added = false;
-		    for(Rule r: grammar.getRules()) {
-		        NonTerminal A = r.getLhs();
-		        for(int i = 0; i < r.getRhs().length-1; i++){
-		            if(r.getRhs()[i] instanceof NonTerminal){
-		                NonTerminal B = (NonTerminal)r.getRhs()[i];
-		                if(r.getRhs()[i+1] instanceof NonTerminal){
-		                    NonTerminal b = (NonTerminal)r.getRhs()[i+1];
-		                    if(first.containsKey(b)){
-		                        /* A → α B β ∈ P, a ∈ fi(β) ⇒ a ∈ fo( B ) */
-		                        for(Alphabet X : first.get(b)){
-		                            added |= tryAddToFollow(B, X);
-		                        }
-		                    }
-		                } else {
-		                    added |= tryAddToFollow(B, r.getRhs()[i+1]);
-		                }
-	                    /* A → α B β ∈ P, ε ∈ fi(β), x ∈ fo( A ) ⇒ x ∈ fo( B ) */
-	                    if(first.get(B).contains(symbols.Tokens.Epsilon.EPS)){
-	                        for(Alphabet Y : follow.get(A)){
-	                            added |= tryAddToFollow(B, Y);  
-	                        }
-	                    }
-		            }
-		        }
-		        if(r.getRhs()[r.getRhs().length-1] instanceof NonTerminal){
-		            NonTerminal b = (NonTerminal)r.getRhs()[r.getRhs().length-1];
-                    for(Alphabet Y : follow.get(A)){
-		                added |= tryAddToFollow(b, Y);       
-                    }
-                }
-		    }
+		List<Rule> rules = grammar.getRules();
+		Iterator<Rule> iter = rules.iterator();
+		while (iter.hasNext()) {
+			Rule rule = iter.next();
+			for (int i = 0; i < rule.getRhs().length; i++) {
+				if (rule.getRhs()[i] instanceof NonTerminal) {
+					NonTerminal nonTerminal = (NonTerminal) rule.getRhs()[i];
+					if (i < rule.getRhs().length - 1 && rule.getRhs()[i + 1] instanceof Token) {
+						// Add token after non-terminal to follow set
+						follow.add(nonTerminal, rule.getRhs()[i + 1]);
+					}
+				}
+			}
+		}
+
+		// Repeat until fix point is reached
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+
+			for (Rule rule : rules) {
+				// Iterate over all symbols
+				for (int i = 0; i < rule.getRhs().length; i++) {
+					if (rule.getRhs()[i] instanceof NonTerminal) {
+						NonTerminal nonTerminal = (NonTerminal) rule.getRhs()[i];
+						if (i < rule.getRhs().length - 1 && rule.getRhs()[i + 1] instanceof NonTerminal) {
+							NonTerminal newNonTerminal = (NonTerminal) rule.getRhs()[i + 1];
+							for (Alphabet symbol : first.get(newNonTerminal)) {
+								if (!follow.contains(nonTerminal, symbol)) {
+									follow.add(nonTerminal, symbol);
+									changed = true;
+								}
+							}
+						}
+
+						// Check if epsilons occur until end of rule
+						boolean allEpsilon = true;
+						for (int j = i + 1; j < rule.getRhs().length; j++) {
+							if (rule.getRhs()[j] instanceof Token) {
+								// Terminal found
+								allEpsilon = false;
+								break;
+							}
+							assert (rule.getRhs()[j] instanceof NonTerminal);
+							NonTerminal newNonTerminal = (NonTerminal) rule.getRhs()[j];
+							if (!first.contains(newNonTerminal, Epsilon.EPS)) {
+								// No epsilon in first set found
+								allEpsilon = false;
+								break;
+							}
+						}
+						if (allEpsilon) {
+							// Add follow set of lhs
+							for (Alphabet symbol : follow.get(rule.getLhs())) {
+								if (!follow.contains(nonTerminal, symbol)) {
+									follow.add(nonTerminal, symbol);
+									changed = true;
+								}
+							}
+						}
+					}
+				}
+			}
+
 		}
 	}
 
@@ -169,7 +213,7 @@ public class LookAheadGenerator {
 	 */
 	public void printFirstSets() {
 		for (NonTerminal nonTerminal : first.keySet()) {
-			System.out.print("    fi(" + nonTerminal + "): {");
+			System.out.print("fi(" + nonTerminal + "): {");
 			Iterator<Alphabet> iter = first.get(nonTerminal).iterator();
 			while (iter.hasNext()) {
 				System.out.print(iter.next());
@@ -186,7 +230,7 @@ public class LookAheadGenerator {
 	 */
 	public void printFollowSets() {
 		for (NonTerminal nonTerminal : follow.keySet()) {
-			System.out.print("    fo(" + nonTerminal + "): {");
+			System.out.print("fo(" + nonTerminal + "): {");
 			Iterator<Alphabet> iter = follow.get(nonTerminal).iterator();
 			while (iter.hasNext()) {
 				System.out.print(iter.next());
