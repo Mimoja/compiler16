@@ -75,14 +75,217 @@ public class JasminGenerator {
 	}
 
 	private String translateProg(ASTNode node) throws GeneratorException {
-		assert (node.getAlphabet().equals(NonTerminal.PROGRAM));
-		StringBuilder result = new StringBuilder();
+            assert (node.getAlphabet().equals(NonTerminal.PROGRAM));
+            StringBuilder result = new StringBuilder();
+            result.append("; Program\n");
+            for (ASTNode subNode : node.getChildren()) {
+                if(subNode.getAlphabet().equals(NonTerminal.PROGRAM)){
+                    result.append(translateProg(subNode));
+                }else if(subNode.getAlphabet().equals(NonTerminal.STATEMENT)){
+                    result.append(translateStatement(subNode));
+                }else{
+                    throw new GeneratorException("Unkown node type");
+                }
+            }
 
-		// TODO implement translation from program to Jasmin code
-
-		return result.toString();
+            return result.toString();
 	}
 
+        private String translateStatement(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.STATEMENT));
+            StringBuilder result = new StringBuilder();
+            
+            List<ASTNode> subNodes = node.getChildren();
+            ASTNode first = subNodes.get(0);
+            if(first.getAlphabet().equals(NonTerminal.DECLARATION)){
+                 result.append(translateDecla(first));
+            }else if(first.getAlphabet().equals(NonTerminal.ASSIGNMENT)){
+                 result.append(translateAssi(first));
+            }else if(first.getAlphabet().equals(NonTerminal.BRANCH)){
+                 result.append(translateBranch(first));
+            }else if(first.getAlphabet().equals(NonTerminal.LOOP)){
+                 result.append(translateLoop(first));
+            }else if(first.getAlphabet().equals(NonTerminal.OUT)){
+                 result.append(translateWrite(first));
+            }else{
+                    throw new GeneratorException("Unkown node type");
+            }
+            
+            return result.toString();
+        }
+        
+        private String translateDecla(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.DECLARATION));
+
+            ASTNode iden = node.getChildren().get(1);
+            symbolTable.put(iden.getAttribute(), symbolTable.size());
+            
+            return "";
+        }
+        private String translateAssi(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.ASSIGNMENT));
+            StringBuilder result = new StringBuilder();
+            
+            List<ASTNode> subNodes = node.getChildren();
+            ASTNode first = subNodes.get(0);
+            ASTNode third = subNodes.get(2);
+            
+            result.append("; Assignment\n");
+            
+            if(third.getAlphabet().equals(Token.READ)){
+                result.append(translateReadInt());
+            }else if(third.getAlphabet().equals(NonTerminal.EXPR)){
+                result.append(translateExpr(third));
+            }
+            result.append("istore ");
+            int varnum = symbolTable.get(first.getAttribute());
+            result.append(varnum);
+            result.append("\n");
+            return result.toString();
+        }
+        
+        private String translateBranch(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.BRANCH));
+            StringBuilder result = new StringBuilder();
+            
+            result.append("; IF\n");
+            
+            List<ASTNode> children = node.getChildren();
+            int programcount = 0;
+            for(ASTNode child : children){
+                if(child.getAlphabet().equals(NonTerminal.GUARD)){
+                    result.append(translateGuard(child));
+                    result.append("ifeq ifLabel_"+ifCount+"\n");
+                }
+                if(child.getAlphabet().equals(NonTerminal.PROGRAM)){
+                    programcount++;
+                    if(programcount == 2){
+                        result.append("; ELSE\n");
+                        result.append("ifLabel_"+ifCount+":\n");
+                    }
+                    
+                    result.append(translateProg(child));
+                    result.append("goto ifLabelEnd_"+ifCount+"\n");
+                }
+            }
+            if(programcount == 1)
+                result.append("ifLabel_"+ifCount+":\n");
+            result.append("ifLabelEnd_"+ifCount+":\n");
+            
+            ifCount++;
+            return result.toString();
+        }
+        private String translateLoop(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.LOOP));
+            StringBuilder result = new StringBuilder();
+            
+            List<ASTNode> subNodes = node.getChildren();
+            
+            ASTNode guard = subNodes.get(2);
+            ASTNode program = subNodes.get(5);
+
+            result.append("LoopLabelGuard_"+loopCount+":\n");
+            result.append(translateGuard(guard));
+            
+            result.append("ifeq LoopLabelEnd_"+loopCount+"\n");
+            
+            result.append(translateProg(program));
+            
+            // Evaluate guard again
+            result.append("goto LoopLabelGuard_"+loopCount+"\n");
+            
+            result.append("LoopLabelEnd_"+loopCount+":\n");
+            
+            loopCount++;
+            return result.toString();
+        }
+
+        private String translateGuard(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.GUARD));
+            StringBuilder result = new StringBuilder();
+            List<ASTNode> subNodes = node.getChildren();
+            
+            ASTNode first = subNodes.get(0);
+            result.append("; Guard\n");
+            
+            if(first.getAlphabet().equals(NonTerminal.RELATION)){
+                result.append(translateRelation(first));
+            }
+            if(first.getAlphabet().equals(NonTerminal.SUBGUARD)){
+                result.append(translateSubguard(first));
+            }
+            if(first.getAlphabet().equals(Token.LBRACE)){
+                result.append(translateSubguard(subNodes.get(1)));
+            }
+            if(first.getAlphabet().equals(Token.NOT)){
+                result.append(translateGuard(subNodes.get(2)));
+                result.append("bipush 1");
+                result.append("ixor");
+            }
+            return result.toString();
+        }
+        
+        private String translateSubguard(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.SUBGUARD));
+            StringBuilder result = new StringBuilder();
+            List<ASTNode> subNodes = node.getChildren();
+            
+            ASTNode first = subNodes.get(0);
+            ASTNode second = subNodes.get(1);
+            ASTNode third = subNodes.get(2);
+            
+            result.append(translateGuard(first));
+            result.append(translateGuard(third));
+            
+            if(second.getAlphabet().equals(Token.AND)){
+                result.append("iand\n");
+            }else{
+                result.append("ior\n");
+            }
+            
+            return result.toString();
+        }
+        private String translateRelation(ASTNode node) throws GeneratorException{
+            assert (node.getAlphabet().equals(NonTerminal.RELATION));
+            StringBuilder result = new StringBuilder();
+            
+            List<ASTNode> subNodes = node.getChildren();
+            
+            ASTNode first = subNodes.get(0);
+            ASTNode second = subNodes.get(1);
+            ASTNode third = subNodes.get(2);
+            
+            result.append(translateExpr(first));
+            result.append(translateExpr(third));
+            
+            Token t = (Token) second.getAlphabet();
+            
+            if(t.equals(Token.LT)){
+                result.append("if_icmplt RelLabelTrue_"+relCount+"\n");
+            }else if(t.equals(Token.LEQ)){
+                result.append("if_icmple RelLabelTrue_"+relCount+"\n");
+            }else if(t.equals(Token.EQ)){
+                result.append("if_icmpeq RelLabelTrue_"+relCount+"\n");
+            }else if(t.equals(Token.NEQ)){
+                result.append("if_icmpne RelLabelTrue_"+relCount+"\n");
+            }else if(t.equals(Token.GEQ)){
+                result.append("if_icmpge RelLabelTrue_"+relCount+"\n");
+            }else if(t.equals(Token.GT)){
+                result.append("if_icmpgt RelLabelTrue_"+relCount+"\n");
+            }
+            
+            result.append("bipush 0\n");
+            result.append("goto RelLabelEnd_"+relCount+"\n");
+            
+            result.append("RelLabelTrue_"+relCount+":\n");
+            result.append("bipush 1\n");
+            
+            result.append("RelLabelEnd_"+relCount+":\n");
+            
+            relCount++;
+            return result.toString();
+        }
+        
 	/**
 	 * Generate Jasmin code for an expression.
 	 * 
@@ -95,12 +298,54 @@ public class JasminGenerator {
 	private String translateExpr(ASTNode node) throws GeneratorException {
 		assert (node.getAlphabet().equals(NonTerminal.EXPR));
 		StringBuilder result = new StringBuilder();
-
-		// TODO implement translation of expression to Jasmin code.
+                
+                result.append("; Expression\n");
+                
+                List<ASTNode> subNodes = node.getChildren();
+                ASTNode first = subNodes.get(0);
+                if(first.getAlphabet().equals(Token.NUMBER)){
+                    result.append("bipush ");
+                    result.append(first.getAttribute());
+                    result.append("\n");
+                    
+                }else if(first.getAlphabet().equals(Token.ID)){
+                    result.append("iload ");
+                    int varnum = symbolTable.get(first.getAttribute());
+                    result.append(varnum);
+                    result.append("\n");
+                }
+                else if(first.getAlphabet().equals(NonTerminal.SUBEXPR)){
+                    result.append(translateSubexpr(first));
+                }else if(first.getAlphabet().equals(Token.LBRACE)){
+                    result.append(translateSubexpr(subNodes.get(1)));
+                }
 
 		return result.toString();
 	}
+        
+        private String translateSubexpr(ASTNode node) throws GeneratorException {
+            assert (node.getAlphabet().equals(NonTerminal.PROGRAM));
+            StringBuilder result = new StringBuilder();
 
+            List<ASTNode> subNodes = node.getChildren();
+            ASTNode second = subNodes.get(1);
+            
+            result.append(translateExpr(subNodes.get(0)));
+            result.append(translateExpr(subNodes.get(2)));
+            
+            symbols.Alphabet a = second.getAlphabet();
+            if(a.equals(Token.PLUS)){
+                result.append("iadd");
+            }else if(a.equals(Token.MINUS)){
+                result.append("isub");
+            }else if(a.equals(Token.TIMES)){
+                result.append("imul");
+            }else if(a.equals(Token.DIV)){
+                result.append("idiv");
+            }
+            result.append("\n");
+            return result.toString();
+        }
 	/**
 	 * Generate Jasmin code for reading an int from the console.
 	 * 
@@ -115,6 +360,7 @@ public class JasminGenerator {
 		appendString(result, "invokevirtual java/io/Console/readLine()Ljava/lang/String;");
 		appendString(result, "; Parse String to int, do not handle exceptions");
 		appendString(result, "invokestatic java/lang/Integer/parseInt(Ljava/lang/String;)I");
+                
 		return result.toString();
 	}
 
